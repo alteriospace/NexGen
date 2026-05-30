@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexGen | Premium Dashboard</title>
+    <title>NexGen | Financial Dashboard</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -14,17 +14,7 @@
                 extend: {
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
-                        brand: {
-                            purple: '#6B46C1',     /* Primary Purple */
-                            light: '#F4F0FF',      /* Light Purple BG */
-                            dark: '#0F172A',       /* Dark BG */
-                            surface: '#1E293B',    /* Dark Card */
-                            gray: '#8A92A6'        /* Text Gray */
-                        }
-                    },
-                    boxShadow: {
-                        'soft': '0 4px 20px rgba(0, 0, 0, 0.03)',
-                        'card': '0 10px 30px rgba(107, 70, 193, 0.08)'
+                        brand: { blue: '#2563EB', dark: '#0B1120', surface: '#171E2E' }
                     }
                 }
             }
@@ -36,605 +26,509 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        body { background-color: #F4F0FF; transition: background-color 0.3s, color 0.3s; }
-        .dark body { background-color: #0F172A; }
+        body { transition: background-color 0.3s, color 0.3s; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Animasi Transisi Halaman */
         .page-section { display: none; opacity: 0; transform: translateY(15px); }
         .page-section.active { display: block; animation: slideUpFade 0.4s ease forwards; }
         @keyframes slideUpFade { to { opacity: 1; transform: translateY(0); } }
 
-        /* Sidebar Kiri Desktop */
-        .side-btn { transition: all 0.2s ease; color: #8A92A6; }
-        .side-btn:hover { background-color: rgba(107, 70, 193, 0.05); color: #6B46C1; }
-        .side-btn.active { background-color: #6B46C1; color: #FFFFFF; box-shadow: 0 4px 15px rgba(107, 70, 193, 0.3); }
-        
-        .dark .side-btn { color: #94A3B8; }
-        .dark .side-btn:hover { background-color: rgba(139, 92, 246, 0.1); color: #A78BFA; }
-        .dark .side-btn.active { background-color: #7C3AED; color: #FFFFFF; box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3); }
+        /* DESKTOP NAV - SLIDING */
+        .desktop-nav {
+            position: relative;
+            background-color: #f1f5f9;
+            padding: 4px;
+            border-radius: 9999px;
+            border: 1px solid #e2e8f0;
+        }
+        .dark .desktop-nav {
+            background-color: #1e293b;
+            border-color: #334155;
+        }
 
-        /* Navigasi Mobile Kapsul Melayang */
-        .nav-mob-btn { transition: all 0.3s; color: #8A92A6; border-radius: 9999px; }
+        .nav-btn {
+            position: relative;
+            z-index: 2;
+            transition: color 0.2s ease;
+            padding: 9px 24px;
+            border-radius: 9999px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-btn.active { color: white; font-weight: 600; }
+        .dark .nav-btn.active { color: #0f172a; }
+
+        .nav-slider {
+            position: absolute;
+            top: 4px;
+            left: 0;
+            height: calc(100% - 8px);
+            background-color: #0f172a;
+            border-radius: 9999px;
+            z-index: 1;
+            transition: all 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+        }
+        .dark .nav-slider {
+            background-color: #f1f5f9;
+            box-shadow: 0 2px 8px rgba(241, 245, 249, 0.15);
+        }
+
+        /* MOBILE BOTTOM NAV - CLEAN SLIDING */
+        .mobile-nav {
+            position: relative;
+            background-color: rgba(255,255,255,0.96);
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            padding: 4px;
+        }
+        .dark .mobile-nav {
+            background-color: rgba(23, 30, 46, 0.96);
+            border-color: #334155;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-mob-btn {
+            position: relative;
+            z-index: 2;
+            transition: color 0.2s ease;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            color: #64748B;
+        }
         .dark .nav-mob-btn { color: #94A3B8; }
-        .nav-mob-btn.active { background-color: #6B46C1; color: #FFFFFF; box-shadow: 0 4px 15px rgba(107, 70, 193, 0.3); }
-        .dark .nav-mob-btn.active { background-color: #7C3AED; color: #FFFFFF; }
 
-        /* Logo Mastercard Palsu untuk Kartu Wallet */
-        .mc-logo { position: relative; width: 32px; height: 20px; }
-        .mc-circle-1 { position: absolute; left: 0; width: 20px; height: 20px; background: rgba(239, 68, 68, 0.8); border-radius: 50%; }
-        .mc-circle-2 { position: absolute; right: 0; width: 20px; height: 20px; background: rgba(250, 204, 21, 0.8); border-radius: 50%; mix-blend-mode: multiply; }
+        .nav-mob-btn.active { color: white; }
+        .dark .nav-mob-btn.active { color: white; }
+
+        .mobile-slider {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 48px;
+            height: 48px;
+            background-color: #2563EB;
+            border-radius: 12px;
+            z-index: 1;
+            transition: all 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        .dark .mobile-slider {
+            background-color: #3B82F6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+        }
+
+        .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; }
+        .modal-backdrop.active { display: block; }
     </style>
 </head>
-<body class="text-gray-900 dark:text-gray-100 flex h-screen overflow-hidden antialiased">
+<body class="bg-[#F8FAFC] dark:bg-brand-dark text-gray-900 dark:text-gray-100 flex flex-col h-screen overflow-hidden antialiased">
 
-    <aside class="hidden lg:flex flex-col w-64 bg-white dark:bg-brand-surface border-r border-gray-100 dark:border-gray-800 z-20">
-        <div class="h-24 flex items-center gap-3 px-8">
-            <div class="w-8 h-8 bg-brand-purple rounded-lg flex items-center justify-center text-white font-bold text-lg"><i class="fa-solid fa-n"></i></div>
-            <h1 class="text-2xl font-extrabold tracking-tight">NexGen</h1>
+    <!-- HEADER -->
+    <header class="h-20 bg-white dark:bg-brand-surface px-6 md:px-10 flex justify-between items-center z-30 border-b border-gray-100 dark:border-gray-800 shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-brand-blue rounded-2xl flex items-center justify-center text-white text-xl shadow-sm"><i class="fa-solid fa-bolt"></i></div>
+            <h1 class="text-2xl font-extrabold tracking-tighter">NexGen</h1>
         </div>
 
-        <nav class="flex-1 px-4 space-y-2 overflow-y-auto hide-scrollbar">
-            <button onclick="switchPage('dashboard')" id="nav-dashboard" class="side-btn active w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl font-semibold text-sm">
-                <i class="fa-solid fa-border-all w-5 text-center"></i> Dashboard
-            </button>
-            <button onclick="switchPage('transaction')" id="nav-transaction" class="side-btn w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl font-semibold text-sm">
-                <i class="fa-solid fa-arrow-right-arrow-left w-5 text-center"></i> Transactions
-            </button>
-            <button onclick="switchPage('wallet')" id="nav-wallet" class="side-btn w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl font-semibold text-sm">
-                <i class="fa-solid fa-wallet w-5 text-center"></i> Wallet
-            </button>
-            <button onclick="switchPage('goals')" id="nav-goals" class="side-btn w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl font-semibold text-sm">
-                <i class="fa-solid fa-bullseye w-5 text-center"></i> Goals
-            </button>
-            <button onclick="switchPage('report')" id="nav-report" class="side-btn w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl font-semibold text-sm">
-                <i class="fa-solid fa-chart-line w-5 text-center"></i> Analytics
-            </button>
+        <!-- DESKTOP NAV -->
+        <nav class="hidden md:block">
+            <div class="desktop-nav flex items-center relative" id="desktop-nav-container">
+                <div id="nav-slider" class="nav-slider"></div>
+                
+                <button onclick="switchPage('dashboard')" id="nav-dashboard" class="nav-btn active">
+                    <i class="fa-solid fa-border-all w-4"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button onclick="switchPage('report')" id="nav-report" class="nav-btn">
+                    <i class="fa-solid fa-chart-line w-4"></i>
+                    <span>Analytics</span>
+                </button>
+                <button onclick="switchPage('transaction')" id="nav-transaction" class="nav-btn">
+                    <i class="fa-solid fa-list w-4"></i>
+                    <span>Transactions</span>
+                </button>
+                <button onclick="switchPage('wallet')" id="nav-wallet" class="nav-btn">
+                    <i class="fa-solid fa-wallet w-4"></i>
+                    <span>Wallets</span>
+                </button>
+            </div>
         </nav>
 
-        <div class="p-4 border-t border-gray-100 dark:border-gray-800 space-y-2">
-            <button onclick="toggleTheme()" class="side-btn w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-semibold text-sm">
-                <i class="fa-solid fa-circle-half-stroke w-5 text-center"></i> Switch Theme
-            </button>
-            <button class="side-btn w-full flex items-center gap-4 px-4 py-3 rounded-2xl font-semibold text-sm">
-                <i class="fa-solid fa-gear w-5 text-center"></i> Settings
-            </button>
+        <div onclick="toggleTheme()" class="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl flex items-center p-1 w-[68px] h-9 cursor-pointer relative">
+            <div class="absolute left-2.5 text-xs text-gray-400"><i class="fa-solid fa-sun"></i></div>
+            <div class="absolute right-2.5 text-xs text-gray-500"><i class="fa-solid fa-moon"></i></div>
+            <div id="theme-slider" class="w-7 h-7 bg-white dark:bg-gray-700 rounded-2xl shadow-sm flex items-center justify-center transition-transform duration-300" style="transform: translateX(0);">
+                <i class="fa-solid fa-sun text-yellow-500 text-xs dark:hidden"></i>
+                <i class="fa-solid fa-moon text-indigo-300 text-xs hidden dark:block"></i>
+            </div>
         </div>
-    </aside>
+    </header>
 
-    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+    <main id="main-scroll" class="flex-1 overflow-y-auto hide-scrollbar p-5 md:p-8 pb-20 md:pb-8">
         
-        <header class="h-24 px-6 md:px-10 flex justify-between items-center shrink-0">
+        <div class="max-w-7xl mx-auto flex justify-between items-end mb-6">
             <div>
-                <h2 class="text-2xl md:text-3xl font-bold tracking-tight" id="header-title">Welcome back, Boss!</h2>
-                <p class="text-sm text-gray-500 mt-1" id="header-subtitle">It is the best time to manage your finances</p>
+                <h2 class="text-3xl font-bold tracking-tight" id="header-title">Dashboard Overview</h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1" id="header-subtitle">Your current financial summary and activity</p>
             </div>
-            
-            <div class="flex items-center gap-4">
-                <button class="w-10 h-10 rounded-full bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center text-gray-500 hover:text-brand-purple transition"><i class="fa-solid fa-magnifying-glass"></i></button>
-                <button class="w-10 h-10 rounded-full bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center text-gray-500 hover:text-brand-purple transition relative">
-                    <i class="fa-regular fa-bell"></i>
-                    <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
-                </button>
-                
-                <div class="hidden md:flex items-center gap-3 bg-white dark:bg-gray-800 px-3 py-1.5 rounded-full shadow-sm cursor-pointer ml-2">
-                    <div class="w-8 h-8 rounded-full bg-brand-light dark:bg-gray-700 text-brand-purple flex items-center justify-center font-bold text-sm">B</div>
-                    <span class="text-sm font-bold pr-2">Boss.</span>
-                </div>
+            <div class="hidden md:flex gap-3">
+                <button onclick="openExportModal()" class="px-4 py-2 rounded-2xl border text-sm font-semibold flex items-center gap-2 bg-white dark:bg-brand-surface">Export</button>
+                <button onclick="openFilterModal()" class="px-4 py-2 rounded-2xl bg-brand-blue text-white text-sm font-semibold flex items-center gap-2">Filter</button>
             </div>
-        </header>
-
-        <div id="main-scroll" class="flex-1 overflow-y-auto hide-scrollbar px-6 md:px-10 pb-32 md:pb-10">
-            
-            <div id="page-dashboard" class="page-section active space-y-6 max-w-7xl mx-auto">
-                
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                    <div class="bg-white dark:bg-brand-surface p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 relative overflow-hidden group">
-                        <div class="flex justify-between items-start mb-4">
-                            <p class="text-gray-500 dark:text-gray-400 font-medium text-sm">Total balance</p>
-                            <div class="w-8 h-8 rounded-full border border-gray-100 dark:border-gray-700 flex items-center justify-center group-hover:bg-brand-purple group-hover:text-white transition cursor-pointer"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></div>
-                        </div>
-                        <h3 class="text-2xl md:text-3xl font-extrabold mb-3" id="dash-balance">Rp 0</h3>
-                        <span class="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-md"><i class="fa-solid fa-arrow-up text-[10px]"></i> Live Sync</span>
-                    </div>
-
-                    <div class="bg-white dark:bg-brand-surface p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 relative overflow-hidden group">
-                        <div class="flex justify-between items-start mb-4">
-                            <p class="text-gray-500 dark:text-gray-400 font-medium text-sm">Income</p>
-                            <div class="w-8 h-8 rounded-full border border-gray-100 dark:border-gray-700 flex items-center justify-center group-hover:bg-brand-purple group-hover:text-white transition cursor-pointer"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></div>
-                        </div>
-                        <h3 class="text-2xl md:text-3xl font-extrabold mb-3" id="dash-income">Rp 0</h3>
-                        <span class="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-md"><i class="fa-solid fa-arrow-up text-[10px]"></i> This Month</span>
-                    </div>
-
-                    <div class="bg-white dark:bg-brand-surface p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 relative overflow-hidden group">
-                        <div class="flex justify-between items-start mb-4">
-                            <p class="text-gray-500 dark:text-gray-400 font-medium text-sm">Expense</p>
-                            <div class="w-8 h-8 rounded-full border border-gray-100 dark:border-gray-700 flex items-center justify-center group-hover:bg-brand-purple group-hover:text-white transition cursor-pointer"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></div>
-                        </div>
-                        <h3 class="text-2xl md:text-3xl font-extrabold mb-3" id="dash-expense">Rp 0</h3>
-                        <span class="inline-flex items-center gap-1 text-xs font-bold text-rose-500 bg-rose-50 dark:bg-rose-900/20 px-2 py-1 rounded-md"><i class="fa-solid fa-arrow-down text-[10px]"></i> This Month</span>
-                    </div>
-
-                    <div class="bg-white dark:bg-brand-surface p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 relative overflow-hidden group">
-                        <div class="flex justify-between items-start mb-4">
-                            <p class="text-gray-500 dark:text-gray-400 font-medium text-sm">Saving Rate</p>
-                            <div class="w-8 h-8 rounded-full border border-gray-100 dark:border-gray-700 flex items-center justify-center group-hover:bg-brand-purple group-hover:text-white transition cursor-pointer"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></div>
-                        </div>
-                        <h3 class="text-2xl md:text-3xl font-extrabold mb-3 text-brand-purple">35%</h3>
-                        <span class="inline-flex items-center gap-1 text-xs font-bold text-brand-purple bg-brand-light dark:bg-brand-purple/20 px-2 py-1 rounded-md">Optimal</span>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="lg:col-span-2 bg-white dark:bg-brand-surface p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="font-bold text-lg">Money flow</h3>
-                            <div class="flex items-center gap-4">
-                                <span class="flex items-center gap-2 text-xs font-bold text-gray-500"><div class="w-2.5 h-2.5 rounded-full bg-brand-purple"></div> Income</span>
-                                <span class="flex items-center gap-2 text-xs font-bold text-gray-500"><div class="w-2.5 h-2.5 rounded-full bg-[#D3C1F5] dark:bg-purple-900"></div> Expense</span>
-                            </div>
-                        </div>
-                        <div class="relative w-full h-[250px]">
-                            <canvas id="barChart"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col justify-center">
-                        <div class="flex justify-between items-center mb-2">
-                            <h3 class="font-bold text-lg">Budget</h3>
-                            <button class="w-8 h-8 rounded-full border border-gray-100 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50"><i class="fa-solid fa-arrow-up-right-from-square text-xs text-gray-500"></i></button>
-                        </div>
-                        <div class="relative w-full h-[200px] flex justify-center mt-4">
-                            <canvas id="donutChart"></canvas>
-                            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-4">
-                                <p class="text-xs text-gray-500 font-medium">Total Spent</p>
-                                <p class="text-lg font-bold" id="dash-spent">Rp 0</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="font-bold text-lg">Recent transactions</h3>
-                            <button onclick="switchPage('transaction')" class="text-sm font-semibold text-gray-500 hover:text-brand-purple border border-gray-200 dark:border-gray-700 px-3 py-1 rounded-lg">See all <i class="fa-solid fa-chevron-right text-[10px] ml-1"></i></button>
-                        </div>
-                        <div class="space-y-4" id="dash-trx-list">
-                            </div>
-                    </div>
-
-                    <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="font-bold text-lg">Saving goals</h3>
-                            <button onclick="switchPage('goals')" class="w-8 h-8 rounded-full border border-gray-100 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50"><i class="fa-solid fa-arrow-up-right-from-square text-xs text-gray-500"></i></button>
-                        </div>
-                        
-                        <div class="space-y-6">
-                            <div>
-                                <div class="flex justify-between items-end mb-2">
-                                    <p class="font-bold text-sm">MacBook Pro</p>
-                                    <p class="font-bold text-sm">Rp 15.000.000</p>
-                                </div>
-                                <div class="w-full bg-brand-light dark:bg-gray-800 h-3.5 rounded-full overflow-hidden relative">
-                                    <div class="bg-brand-purple h-full rounded-full" style="width: 75%"></div>
-                                    <span class="absolute left-2 top-0 text-[9px] text-white font-bold leading-[14px]">75%</span>
-                                </div>
-                            </div>
-                            <div>
-                                <div class="flex justify-between items-end mb-2">
-                                    <p class="font-bold text-sm">Liburan Jepang</p>
-                                    <p class="font-bold text-sm text-brand-purple">Rp 20.000.000</p>
-                                </div>
-                                <div class="w-full bg-brand-light dark:bg-gray-800 h-3.5 rounded-full overflow-hidden relative">
-                                    <div class="bg-[#8B5CF6] h-full rounded-full" style="width: 42%"></div>
-                                    <span class="absolute left-2 top-0 text-[9px] text-white font-bold leading-[14px]">42%</span>
-                                </div>
-                            </div>
-                            <div>
-                                <div class="flex justify-between items-end mb-2">
-                                    <p class="font-bold text-sm">Dana Darurat</p>
-                                    <p class="font-bold text-sm text-amber-500">Rp 50.000.000</p>
-                                </div>
-                                <div class="w-full bg-brand-light dark:bg-gray-800 h-3.5 rounded-full overflow-hidden relative">
-                                    <div class="bg-amber-400 h-full rounded-full" style="width: 30%"></div>
-                                    <span class="absolute left-2 top-0 text-[9px] text-white font-bold leading-[14px]">30%</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="page-wallet" class="page-section space-y-6 max-w-7xl mx-auto">
-                <div class="bg-brand-purple bg-gradient-to-r from-[#5a39a2] to-[#805ad5] rounded-3xl p-8 md:p-12 text-center shadow-card relative overflow-hidden">
-                    <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(circle at 20% 150%, #ffffff 0%, transparent 50%), radial-gradient(circle at 80% -50%, #ffffff 0%, transparent 50%);"></div>
-                    <p class="text-purple-200 font-medium mb-2 relative z-10">Total Balance</p>
-                    <h1 class="text-4xl md:text-6xl font-extrabold text-white mb-2 relative z-10" id="wallet-total">Rp 0</h1>
-                    <p class="text-purple-200 text-sm relative z-10">Available Funds</p>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pt-4" id="full-wallet-grid">
-                    </div>
-            </div>
-
-            <div id="page-transaction" class="page-section space-y-6 max-w-7xl mx-auto">
-                <div class="bg-white dark:bg-brand-surface rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
-                    <div class="p-4 md:p-6 flex flex-col md:flex-row justify-between items-center gap-4 border-b border-gray-100 dark:border-gray-800">
-                        <div class="relative w-full md:w-80">
-                            <i class="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                            <input type="text" placeholder="Search transactions..." class="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl pl-11 pr-4 py-2.5 text-sm focus:border-brand-purple outline-none text-gray-700 dark:text-white transition">
-                        </div>
-                        <div class="flex gap-2 w-full md:w-auto">
-                            <select class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-600 dark:text-gray-300 outline-none w-full md:w-auto">
-                                <option>Date Range</option>
-                            </select>
-                            <button class="bg-brand-light dark:bg-brand-purple/20 text-brand-purple font-semibold px-6 py-2.5 rounded-xl text-sm whitespace-nowrap hover:bg-purple-100 transition"><i class="fa-solid fa-download mr-2"></i>Export</button>
-                        </div>
-                    </div>
-                    
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse whitespace-nowrap">
-                            <thead>
-                                <tr class="bg-white dark:bg-brand-surface text-gray-400 dark:text-gray-500 text-xs font-bold uppercase tracking-wider border-b border-gray-100 dark:border-gray-800">
-                                    <th class="px-6 py-4">Date</th>
-                                    <th class="px-6 py-4">Amount</th>
-                                    <th class="px-6 py-4">Merchant / Desc</th>
-                                    <th class="px-6 py-4">Method</th>
-                                    <th class="px-6 py-4">Category</th>
-                                </tr>
-                            </thead>
-                            <tbody id="full-trx-list" class="divide-y divide-gray-50 dark:divide-gray-800/50">
-                                </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <div id="page-report" class="page-section space-y-6 max-w-7xl mx-auto">
-                <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800">
-                    <h3 class="font-bold text-lg mb-6">Income vs. Expenses Over Time</h3>
-                    <div class="relative w-full h-[320px]">
-                        <canvas id="lineChart"></canvas>
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800">
-                        <h3 class="font-bold text-lg mb-4">Spending by Category</h3>
-                        <div class="relative w-full h-[280px] flex justify-center">
-                            <canvas id="analyticsDonut"></canvas>
-                        </div>
-                    </div>
-                    <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 space-y-4">
-                        <h3 class="font-bold text-lg mb-2">Insights</h3>
-                        
-                        <div class="space-y-4">
-                            <div>
-                                <p class="font-bold text-gray-900 dark:text-white text-sm mb-1">Top Spending: Food & Groceries</p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">Food is currently taking up 40% of your expenses.</p>
-                            </div>
-                            <div class="h-px bg-gray-100 dark:bg-gray-800 w-full"></div>
-                            <div>
-                                <p class="font-bold text-gray-900 dark:text-white text-sm mb-1">Income increased by 12%</p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">Your total income has increased compared to last month.</p>
-                            </div>
-                            <div class="h-px bg-gray-100 dark:bg-gray-800 w-full"></div>
-                            <div>
-                                <p class="font-bold text-gray-900 dark:text-white text-sm mb-1">Saved Rp 2.500.000 this month</p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">You are on track with your emergency fund goals.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="page-goals" class="page-section space-y-6 max-w-7xl mx-auto">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800">
-                        <div class="flex items-center gap-4 mb-6">
-                            <div class="w-12 h-12 bg-brand-light dark:bg-gray-800 rounded-xl flex items-center justify-center text-2xl">💻</div>
-                            <h4 class="font-bold text-lg">MacBook Pro</h4>
-                        </div>
-                        <div class="w-full bg-brand-light dark:bg-gray-800 h-3 rounded-full overflow-hidden mb-3">
-                            <div class="bg-brand-purple h-full rounded-full" style="width: 75%"></div>
-                        </div>
-                        <p class="font-bold text-sm text-gray-900 dark:text-white">Rp 22.500.000 <span class="text-gray-400 font-normal">/ Rp 30.000.000 (75%)</span></p>
-                    </div>
-                    <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800">
-                        <div class="flex items-center gap-4 mb-6">
-                            <div class="w-12 h-12 bg-brand-light dark:bg-gray-800 rounded-xl flex items-center justify-center text-2xl">🏖️</div>
-                            <h4 class="font-bold text-lg">Liburan</h4>
-                        </div>
-                        <div class="w-full bg-brand-light dark:bg-gray-800 h-3 rounded-full overflow-hidden mb-3">
-                            <div class="bg-[#8B5CF6] h-full rounded-full" style="width: 40%"></div>
-                        </div>
-                        <p class="font-bold text-sm text-gray-900 dark:text-white">Rp 10.000.000 <span class="text-gray-400 font-normal">/ Rp 25.000.000 (40%)</span></p>
-                    </div>
-                    <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800">
-                        <div class="flex items-center gap-4 mb-6">
-                            <div class="w-12 h-12 bg-brand-light dark:bg-gray-800 rounded-xl flex items-center justify-center text-2xl">☂️</div>
-                            <h4 class="font-bold text-lg">Dana Darurat</h4>
-                        </div>
-                        <div class="w-full bg-brand-light dark:bg-gray-800 h-3 rounded-full overflow-hidden mb-3">
-                            <div class="bg-brand-purple h-full rounded-full" style="width: 90%"></div>
-                        </div>
-                        <p class="font-bold text-sm text-gray-900 dark:text-white">Rp 45.000.000 <span class="text-gray-400 font-normal">/ Rp 50.000.000 (90%)</span></p>
-                    </div>
-                </div>
-            </div>
-
         </div>
+
+        <!-- DASHBOARD -->
+        <div id="page-dashboard" class="page-section active space-y-6 max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div class="bg-gradient-to-br from-blue-600 to-blue-700 p-6 rounded-3xl text-white">
+                    <div class="flex justify-between mb-5">
+                        <div>
+                            <p class="text-blue-100 text-xs tracking-[1px]">TOTAL BALANCE</p>
+                            <h3 class="text-4xl font-extrabold mt-1" id="dash-balance">Rp 0</h3>
+                        </div>
+                        <div class="w-11 h-11 bg-white/20 rounded-2xl flex items-center justify-center"><i class="fa-solid fa-wallet"></i></div>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl border">
+                    <p class="text-sm text-gray-500">TOTAL INCOME</p>
+                    <h3 class="text-3xl font-extrabold mt-1" id="dash-income">Rp 0</h3>
+                </div>
+                <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl border">
+                    <p class="text-sm text-gray-500">TOTAL EXPENSE</p>
+                    <h3 class="text-3xl font-extrabold mt-1" id="dash-expense">Rp 0</h3>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl border">
+                    <h3 class="font-bold mb-4">My Wallets</h3>
+                    <div id="dash-wallet-list" class="space-y-3"></div>
+                </div>
+                <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl border">
+                    <h3 class="font-bold mb-4">Recent Transactions</h3>
+                    <div id="dash-trx-list" class="space-y-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANALYTICS -->
+        <div id="page-report" class="page-section space-y-6 max-w-7xl mx-auto">
+            <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl border">
+                <h3 class="font-bold mb-4">Performance Overview</h3>
+                <div class="h-[320px]"><canvas id="barChart"></canvas></div>
+            </div>
+        </div>
+
+        <!-- TRANSACTIONS -->
+        <div id="page-transaction" class="page-section max-w-7xl mx-auto">
+            <div class="bg-white dark:bg-brand-surface rounded-3xl border overflow-hidden">
+                <div class="p-5 flex justify-between items-center border-b">
+                    <input type="text" id="search-trx" placeholder="Search..." class="w-72 bg-gray-50 dark:bg-gray-800 border rounded-2xl px-4 py-2 text-sm">
+                    <button onclick="openAddTransactionModal()" class="bg-brand-blue text-white px-5 py-2 rounded-2xl text-sm font-semibold">+ Add Transaction</button>
+                </div>
+                <table class="w-full">
+                    <thead class="bg-gray-50 dark:bg-gray-800/50 text-xs">
+                        <tr>
+                            <th class="p-4 text-left">Date</th>
+                            <th class="p-4 text-left">Description</th>
+                            <th class="p-4 text-center">Proof</th>
+                            <th class="p-4 text-right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="full-trx-list" class="text-sm"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- WALLETS -->
+        <div id="page-wallet" class="page-section max-w-7xl mx-auto">
+            <div class="flex justify-between mb-5">
+                <h3 class="text-2xl font-bold">Wallets</h3>
+                <button onclick="openAddWalletModal()" class="bg-brand-blue text-white px-5 py-2 rounded-2xl text-sm">+ Add Wallet</button>
+            </div>
+            <div id="full-wallet-grid" class="grid grid-cols-1 md:grid-cols-3 gap-5"></div>
+        </div>
+
     </main>
 
-    <nav class="lg:hidden fixed bottom-6 left-1/2 transform -translate-x-1/2 w-[90%] max-w-sm bg-white/90 dark:bg-brand-surface/90 backdrop-blur-xl border border-gray-100 dark:border-gray-700 z-50 flex justify-between items-center px-4 py-3 rounded-full shadow-card">
-        <button onclick="switchPage('dashboard')" id="nav-mob-dashboard" class="nav-mob-btn active flex items-center justify-center w-12 h-12">
-            <i class="fa-solid fa-border-all text-xl"></i>
-        </button>
-        <button onclick="switchPage('transaction')" id="nav-mob-transaction" class="nav-mob-btn flex items-center justify-center w-12 h-12">
-            <i class="fa-solid fa-arrow-right-arrow-left text-xl"></i>
-        </button>
-        <button onclick="switchPage('wallet')" id="nav-mob-wallet" class="nav-mob-btn flex items-center justify-center w-12 h-12">
-            <i class="fa-solid fa-wallet text-xl"></i>
-        </button>
-        <button onclick="switchPage('report')" id="nav-mob-report" class="nav-mob-btn flex items-center justify-center w-12 h-12">
-            <i class="fa-solid fa-chart-pie text-xl"></i>
-        </button>
+    <!-- MOBILE BOTTOM NAV -->
+    <nav class="md:hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-50" style="width: 248px;">
+        <div class="mobile-nav flex items-center justify-between relative px-1 py-1 rounded-3xl border" id="mobile-nav-container">
+            <div id="mobile-slider" class="mobile-slider"></div>
+            
+            <button onclick="switchPage('dashboard')" id="nav-mob-dashboard" class="nav-mob-btn active">
+                <i class="fa-solid fa-border-all"></i>
+            </button>
+            <button onclick="switchPage('report')" id="nav-mob-report" class="nav-mob-btn">
+                <i class="fa-solid fa-chart-line"></i>
+            </button>
+            <button onclick="switchPage('transaction')" id="nav-mob-transaction" class="nav-mob-btn">
+                <i class="fa-solid fa-list"></i>
+            </button>
+            <button onclick="switchPage('wallet')" id="nav-mob-wallet" class="nav-mob-btn">
+                <i class="fa-solid fa-wallet"></i>
+            </button>
+        </div>
     </nav>
 
+    <div id="exportModal" class="modal-backdrop" onclick="this.classList.remove('active')">
+        <div class="fixed inset-0 flex items-center justify-center p-4" onclick="event.stopPropagation()">
+            <div class="bg-white dark:bg-brand-surface rounded-3xl p-6 w-full max-w-sm">
+                <h3 class="font-bold text-xl mb-4">Export Statement</h3>
+                <div class="flex gap-3">
+                    <button onclick="exportData('pdf')" class="flex-1 py-3 bg-red-500 text-white rounded-2xl">PDF</button>
+                    <button onclick="exportData('csv')" class="flex-1 py-3 bg-emerald-500 text-white rounded-2xl">CSV</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // --- 1. SUPABASE ---
         const SUPABASE_URL = 'https://[GANTI_DENGAN_URL_PROJECT_ANDA].supabase.co';
         const SUPABASE_KEY = '[GANTI_DENGAN_API_KEY_ANDA]';
         const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // --- 2. DATA WALLET BESERTA WARNA KARTU ALA GAMBAR REFERENSI ---
-        let initialBalances = {
-            "BCA": { bal: 25000000, no: "**** 1234", cls: "bg-gradient-to-br from-[#0B5C9F] to-[#1678C6]" },
-            "BRI": { bal: 40100000, no: "**** 5678", cls: "bg-gradient-to-br from-[#12914F] to-[#24A860]" },
-            "Seabank": { bal: 15500000, no: "**** 9012", cls: "bg-gradient-to-br from-[#EE701E] to-[#FA8531]" },
-            "Jago": { bal: 30000000, no: "**** 3456", cls: "bg-gradient-to-br from-[#F5A922] to-[#FFBF3A]" },
-            "Blu BCA": { bal: 39650000, no: "**** 7890", cls: "bg-gradient-to-br from-[#2D8EBC] to-[#40A5D6]" }
-        };
+        let myWallets = [];
+        let allTransactions = [];
+        let filteredTransactions = [];
 
-        function formatRp(num) { return 'Rp ' + num.toLocaleString('id-ID'); }
-
-        // --- 3. THEME TOGGLE ---
-        function toggleTheme() {
-            document.documentElement.classList.toggle('dark');
-            renderCharts(); 
+        function formatRp(num) {
+            return 'Rp ' + Number(num).toLocaleString('id-ID');
         }
 
-        // --- 4. SWITCH PAGE LOGIC ---
-        function switchPage(pageId) {
-            document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
-            document.getElementById('page-' + pageId).classList.add('active');
-
-            // Nav Desktop
-            document.querySelectorAll('.side-btn').forEach(btn => btn.classList.remove('active'));
-            const deskBtn = document.getElementById('nav-' + pageId);
-            if(deskBtn) deskBtn.classList.add('active');
-
-            // Nav Mobile
-            document.querySelectorAll('.nav-mob-btn').forEach(btn => btn.classList.remove('active'));
-            const mobBtn = document.getElementById('nav-mob-' + pageId);
-            if(mobBtn) mobBtn.classList.add('active');
-
-            const titles = { 
-                'dashboard': { title: 'Welcome back, Boss!', sub: 'It is the best time to manage your finances' },
-                'report': { title: 'Analytics', sub: 'Income vs. Expenses Over Time' },
-                'transaction': { title: 'Transactions', sub: 'Search and filter your history' },
-                'wallet': { title: 'Wallet', sub: 'Available Funds' },
-                'goals': { title: 'Saving Goals', sub: 'Track your targets' }
-            };
-            document.getElementById('header-title').innerText = titles[pageId].title;
-            document.getElementById('header-subtitle').innerText = titles[pageId].sub;
-            
-            document.getElementById('main-scroll').scrollTo({top: 0, behavior: 'smooth'});
-
-            if(pageId === 'dashboard' || pageId === 'report') {
-                setTimeout(renderCharts, 50); 
+        function toggleTheme() {
+            const html = document.documentElement;
+            const slider = document.getElementById('theme-slider');
+            if (html.classList.contains('light')) {
+                html.classList.remove('light'); html.classList.add('dark');
+                slider.style.transform = 'translateX(32px)';
+            } else {
+                html.classList.remove('dark'); html.classList.add('light');
+                slider.style.transform = 'translateX(0)';
             }
         }
 
-        // --- 5. RENDER WALLET (GRID WARNA WARNI SEPERTI GAMBAR) ---
+        function switchPage(pageId) {
+            updateActiveNav(pageId);
+
+            document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
+            const page = document.getElementById('page-' + pageId);
+            if (page) page.classList.add('active');
+
+            const titles = {
+                dashboard: { title: 'Dashboard Overview', sub: 'Your current financial summary and activity' },
+                report:    { title: 'Analytics', sub: 'Detailed breakdown of your income and expenses' },
+                transaction:{ title: 'Transactions', sub: 'Complete history of your financial activity' },
+                wallet:    { title: 'Portfolio & Wallets', sub: 'Manage all your connected accounts' }
+            };
+            if (titles[pageId]) {
+                document.getElementById('header-title').innerText = titles[pageId].title;
+                document.getElementById('header-subtitle').innerText = titles[pageId].sub;
+            }
+
+            requestAnimationFrame(() => {
+                document.getElementById('main-scroll').scrollTo({ top: 0, behavior: 'smooth' });
+                if (pageId === 'report') setTimeout(renderCharts, 60);
+            });
+        }
+
+        function updateActiveNav(pageId) {
+            // Desktop
+            const deskContainer = document.getElementById('desktop-nav-container');
+            const deskSlider = document.getElementById('nav-slider');
+            const deskBtn = document.getElementById('nav-' + pageId);
+
+            if (deskContainer && deskSlider && deskBtn) {
+                deskContainer.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                deskBtn.classList.add('active');
+
+                const cRect = deskContainer.getBoundingClientRect();
+                const bRect = deskBtn.getBoundingClientRect();
+                deskSlider.style.left = `${bRect.left - cRect.left}px`;
+                deskSlider.style.width = `${bRect.width}px`;
+            }
+
+            // Mobile
+            const mobContainer = document.getElementById('mobile-nav-container');
+            const mobSlider = document.getElementById('mobile-slider');
+            const mobBtn = document.getElementById('nav-mob-' + pageId);
+
+            if (mobContainer && mobSlider && mobBtn) {
+                mobContainer.querySelectorAll('.nav-mob-btn').forEach(b => b.classList.remove('active'));
+                mobBtn.classList.add('active');
+
+                const cRect = mobContainer.getBoundingClientRect();
+                const bRect = mobBtn.getBoundingClientRect();
+                mobSlider.style.left = `${bRect.left - cRect.left}px`;
+            }
+        }
+
+        // Initialize sliders - INSTANT on load
+        function initSlidersInstant() {
+            // Desktop - Black slider on Dashboard (instant)
+            const deskContainer = document.getElementById('desktop-nav-container');
+            const deskSlider = document.getElementById('nav-slider');
+            const activeDesk = deskContainer.querySelector('.nav-btn.active');
+
+            if (activeDesk && deskSlider) {
+                // Disable transition temporarily
+                deskSlider.style.transition = 'none';
+                
+                const cRect = deskContainer.getBoundingClientRect();
+                const bRect = activeDesk.getBoundingClientRect();
+                
+                deskSlider.style.left = `${bRect.left - cRect.left}px`;
+                deskSlider.style.width = `${bRect.width}px`;
+                
+                // Force reflow then re-enable transition
+                void deskSlider.offsetWidth;
+                
+                setTimeout(() => {
+                    deskSlider.style.transition = 'all 0.32s cubic-bezier(0.32, 0.72, 0, 1)';
+                }, 30);
+            }
+
+            // Mobile
+            const mobContainer = document.getElementById('mobile-nav-container');
+            const mobSlider = document.getElementById('mobile-slider');
+            const activeMob = mobContainer.querySelector('.nav-mob-btn.active');
+
+            if (activeMob && mobSlider) {
+                mobSlider.style.transition = 'none';
+                
+                const cRect = mobContainer.getBoundingClientRect();
+                const bRect = activeMob.getBoundingClientRect();
+                mobSlider.style.left = `${bRect.left - cRect.left}px`;
+                
+                void mobSlider.offsetWidth;
+                
+                setTimeout(() => {
+                    mobSlider.style.transition = 'all 0.32s cubic-bezier(0.32, 0.72, 0, 1)';
+                }, 30);
+            }
+        }
+
         function renderWalletsHTML() {
-            const fullGrid = document.getElementById('full-wallet-grid');
-            fullGrid.innerHTML = '';
-            
-            for (const [name, data] of Object.entries(initialBalances)) {
-                fullGrid.innerHTML += `
-                    <div class="${data.cls} rounded-3xl p-6 shadow-sm text-white hover:-translate-y-1 transition duration-300 flex flex-col justify-between h-40">
-                        <div class="flex items-center gap-2 mb-2">
-                            <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center backdrop-blur-sm"><i class="fa-solid fa-building-columns text-sm"></i></div>
-                            <span class="font-bold text-lg">${name}</span>
+            const dash = document.getElementById('dash-wallet-list');
+            const grid = document.getElementById('full-wallet-grid');
+            if (!dash || !grid) return;
+
+            dash.innerHTML = '';
+            grid.innerHTML = '';
+
+            myWallets.forEach(w => {
+                dash.innerHTML += `
+                    <div class="flex justify-between p-3 border rounded-2xl">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl ${w.bg} ${w.color} flex items-center justify-center"><i class="fa-solid ${w.icon}"></i></div>
+                            <span class="font-semibold">${w.name}</span>
                         </div>
-                        <div>
-                            <h3 class="text-2xl font-extrabold mb-2">${formatRp(data.bal)}</h3>
-                            <div class="flex justify-between items-center w-full">
-                                <p class="text-white/80 tracking-widest text-sm font-medium">${data.no}</p>
-                                <div class="mc-logo">
-                                    <div class="mc-circle-1"></div>
-                                    <div class="mc-circle-2"></div>
-                                </div>
-                            </div>
-                        </div>
+                        <span class="font-bold">${formatRp(w.balance)}</span>
                     </div>
                 `;
-            }
+
+                grid.innerHTML += `
+                    <div class="p-6 border rounded-3xl">
+                        <div class="w-11 h-11 rounded-2xl ${w.bg} ${w.color} flex items-center justify-center mb-4"><i class="fa-solid ${w.icon} text-xl"></i></div>
+                        <p class="text-sm text-gray-500">${w.name}</p>
+                        <p class="text-2xl font-extrabold mt-1">${formatRp(w.balance)}</p>
+                    </div>
+                `;
+            });
         }
 
-        let myBarChart, myDonutChart, myAnalyticsDonut, myLineChart;
+        function renderTransactionsTable(data) {
+            const tbody = document.getElementById('full-trx-list');
+            tbody.innerHTML = '';
+            data.forEach(t => {
+                const sign = t.type === 'income' ? '+' : '-';
+                tbody.innerHTML += `
+                    <tr class="border-b">
+                        <td class="p-4">${new Date(t.transaction_date).toLocaleDateString('id-ID')}</td>
+                        <td class="p-4">${t.category}</td>
+                        <td class="p-4 text-center">${t.attachment_url ? '✓' : ''}</td>
+                        <td class="p-4 text-right font-bold">${sign} ${formatRp(t.amount)}</td>
+                    </tr>
+                `;
+            });
+        }
 
-        // --- 6. RENDER CHARTS (BAR & DOUGHNUT & LINE) ---
+        let barChart;
         function renderCharts() {
-            const isDark = document.documentElement.classList.contains('dark');
-            const textColor = isDark ? '#94A3B8' : '#8A92A6'; 
-            const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)';
-            const brandPurple = '#6B46C1';
-            const lightPurple = isDark ? '#4C1D95' : '#D3C1F5';
-
-            // Bersihkan chart lama
-            if(myBarChart) myBarChart.destroy();
-            if(myDonutChart) myDonutChart.destroy();
-            if(myAnalyticsDonut) myAnalyticsDonut.destroy();
-            if(myLineChart) myLineChart.destroy();
-
-            // CHART 1: Dashboard Bar Chart (Money Flow)
-            const ctxBar = document.getElementById('barChart');
-            if(ctxBar) {
-                myBarChart = new Chart(ctxBar.getContext('2d'), {
-                    type: 'bar',
-                    data: {
-                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                        datasets: [
-                            { label: 'Income', data: [10, 12, 11, 14, 13, 15], backgroundColor: brandPurple, borderRadius: 8, barPercentage: 0.6 },
-                            { label: 'Expense', data: [8, 9, 8, 10, 12, 9], backgroundColor: lightPurple, borderRadius: 8, barPercentage: 0.6 }
-                        ]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            x: { grid: { display: false }, ticks: { color: textColor } },
-                            y: { grid: { color: gridColor }, border: { display: false }, ticks: { color: textColor, callback: (v) => '$' + v + 'k' } }
-                        }
-                    }
-                });
-            }
-
-            // CHART 2: Dashboard Budget Donut
-            const ctxDonut = document.getElementById('donutChart');
-            if(ctxDonut) {
-                myDonutChart = new Chart(ctxDonut.getContext('2d'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Cafe & Restaurants', 'Entertainment', 'Investments', 'Food & Groceries'],
-                        datasets: [{
-                            data: [35, 15, 20, 30],
-                            backgroundColor: [brandPurple, '#8B5CF6', '#A78BFA', '#C4B5FD'],
-                            borderWidth: 0, cutout: '75%'
-                        }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-                });
-            }
-
-            // CHART 3: Analytics Line Chart
-            const ctxLine = document.getElementById('lineChart');
-            if(ctxLine) {
-                myLineChart = new Chart(ctxLine.getContext('2d'), {
-                    type: 'line',
-                    data: {
-                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                        datasets: [
-                            { label: 'Income', data: [50, 100, 100, 150, 140, 90, 210, 180, 140, 220, 170, 250], borderColor: brandPurple, backgroundColor: 'rgba(107, 70, 193, 0.1)', fill: true, tension: 0.4, borderWidth: 3, pointRadius: 0 },
-                            { label: 'Expense', data: [30, 70, 60, 100, 90, 160, 110, 140, 100, 160, 120, 150], borderColor: '#A78BFA', backgroundColor: 'transparent', fill: false, tension: 0.4, borderWidth: 3, pointRadius: 0 }
-                        ]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            x: { grid: { display: false }, ticks: { color: textColor } },
-                            y: { border: { display: false }, grid: { color: gridColor }, ticks: { color: textColor, callback: (v) => '$' + v } }
-                        }
-                    }
-                });
-            }
-
-            // CHART 4: Analytics Donut
-            const ctxAnalyticsDonut = document.getElementById('analyticsDonut');
-            if(ctxAnalyticsDonut) {
-                myAnalyticsDonut = new Chart(ctxAnalyticsDonut.getContext('2d'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Shopping', 'Food', 'Transport', 'Others'],
-                        datasets: [{
-                            data: [45, 30, 15, 10],
-                            backgroundColor: [brandPurple, '#8B5CF6', '#A78BFA', '#E9D8FD'],
-                            borderWidth: 0, cutout: '65%'
-                        }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: textColor, padding: 20 } } } }
-                });
-            }
+            if (barChart) barChart.destroy();
+            const ctx = document.getElementById('barChart').getContext('2d');
+            barChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['May','Jun','Jul','Aug','Sep','Oct'],
+                    datasets: [{
+                        label: 'Income',
+                        data: [12, 19, 14, 22, 17, 25],
+                        backgroundColor: '#2563EB'
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
         }
 
-        // --- 7. AMBIL DATA DARI SUPABASE ---
         async function initData() {
-            try {
-                const { data: trxData, error: trxError } = await db.from('transactions').select('*').order('transaction_date', { ascending: false });
-                if (trxError) throw trxError;
+            myWallets = [
+                { name: "BCA Primary", balance: 18500000, icon: "fa-building-columns", color: "text-blue-600", bg: "bg-blue-100" },
+                { name: "SeaBank", balance: 4200000, icon: "fa-wallet", color: "text-orange-500", bg: "bg-orange-100" }
+            ];
 
-                let totalIn = 0; let totalOut = 0; let totalWealth = 0;
-                const dashList = document.getElementById('dash-trx-list');
-                const fullList = document.getElementById('full-trx-list');
-                dashList.innerHTML = ''; fullList.innerHTML = '';
+            allTransactions = [
+                { type: "income", category: "Salary", amount: 8500000, transaction_date: "2026-05-28", attachment_url: null },
+                { type: "expense", category: "Food & Drink", amount: 125000, transaction_date: "2026-05-27", attachment_url: "https://picsum.photos/200" }
+            ];
+            filteredTransactions = allTransactions;
 
-                let count = 0;
-                trxData.forEach(trx => {
-                    if (trx.type === 'income') totalIn += trx.amount;
-                    if (trx.type === 'expense') totalOut += trx.amount;
+            document.getElementById('dash-balance').innerText = formatRp(22700000);
+            document.getElementById('dash-income').innerText = formatRp(8500000);
+            document.getElementById('dash-expense').innerText = formatRp(125000);
 
-                    const isIncome = trx.type === 'income';
-                    const iconBg = isIncome ? 'bg-brand-light dark:bg-purple-900/20 text-brand-purple' : 'bg-gray-50 dark:bg-gray-800 text-gray-500';
-                    const iconClass = isIncome ? 'fa-arrow-down' : 'fa-arrow-up';
-                    const sign = isIncome ? '+' : '-';
-                    const dateObj = new Date(trx.transaction_date);
-                    const dateFormatted = dateObj.toLocaleDateString('en-US', {day: 'numeric', month:'short'});
-                    const timeFormatted = dateObj.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'});
-
-                    // Render Preview Dashboard (Max 3)
-                    if (count < 3) {
-                        dashList.innerHTML += `
-                            <div class="flex justify-between items-center py-2 border-b border-gray-50 dark:border-gray-800/50 last:border-0">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-10 h-10 rounded-xl ${iconBg} flex items-center justify-center text-sm"><i class="fa-solid ${iconClass}"></i></div>
-                                    <div>
-                                        <p class="font-bold text-sm text-gray-900 dark:text-white capitalize">${trx.category || 'Transaction'}</p>
-                                        <p class="text-xs text-gray-400 font-medium">${dateFormatted} ${timeFormatted}</p>
-                                    </div>
-                                </div>
-                                <span class="font-bold text-sm text-gray-900 dark:text-white">${sign} ${formatRp(trx.amount)}</span>
-                            </div>
-                        `;
-                    }
-                    
-                    // Render List Transaksi Full Table
-                    fullList.innerHTML += `
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
-                            <td class="px-6 py-4 whitespace-nowrap"><p class="text-sm font-medium text-gray-900 dark:text-white">${dateFormatted} ${timeFormatted}</p></td>
-                            <td class="px-6 py-4 whitespace-nowrap"><span class="font-bold text-sm text-gray-900 dark:text-white">${sign} ${formatRp(trx.amount)}</span></td>
-                            <td class="px-6 py-4"><p class="text-sm font-bold text-gray-900 dark:text-white capitalize">${trx.description || trx.category || 'Automated Entry'}</p></td>
-                            <td class="px-6 py-4"><p class="text-sm text-gray-600 dark:text-gray-400 capitalize">${trx.wallet_name || 'System'}</p></td>
-                            <td class="px-6 py-4"><span class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-3 py-1 rounded-full text-xs font-semibold">${trx.category || 'General'}</span></td>
-                        </tr>
-                    `;
-                    count++;
-                });
-
-                // Kalkulasi Saldo Dashboard
-                for (const key in initialBalances) { totalWealth += initialBalances[key].bal; }
-                
-                document.getElementById('dash-balance').innerText = formatRp(totalWealth);
-                document.getElementById('wallet-total').innerText = formatRp(totalWealth);
-                document.getElementById('dash-income').innerText = formatRp(totalIn || 8500000);
-                document.getElementById('dash-expense').innerText = formatRp(totalOut || 6222000);
-                document.getElementById('dash-spent').innerText = formatRp(totalOut || 6222000);
-
-                renderWalletsHTML();
-                renderCharts();
-
-            } catch (err) {
-                console.error(err);
-                document.getElementById('dash-trx-list').innerHTML = `<p class="text-red-500 text-sm py-4">Gagal memuat data dari DB.</p>`;
-            }
+            renderWalletsHTML();
+            renderTransactionsTable(allTransactions);
+            renderCharts();
         }
 
-        initData();
+        function setupSearch() {
+            const input = document.getElementById('search-trx');
+            input.addEventListener('input', () => {
+                const kw = input.value.toLowerCase();
+                filteredTransactions = allTransactions.filter(t => t.category.toLowerCase().includes(kw));
+                renderTransactionsTable(filteredTransactions);
+            });
+        }
+
+        function initialize() {
+            // Initialize sliders FIRST (before any async operation)
+            initSlidersInstant();
+
+            initData();
+            setupSearch();
+
+            // Ensure mobile active state
+            document.getElementById('nav-mob-dashboard').classList.add('active');
+        }
+
+        function openExportModal() { document.getElementById('exportModal').classList.add('active'); }
+        function openFilterModal() { alert('Filter modal (demo)'); }
+        function openAddTransactionModal() { alert('Add Transaction modal (demo)'); }
+        function openAddWalletModal() { alert('Add Wallet modal (demo)'); }
+        function exportData(type) { alert('Exporting as ' + type); document.getElementById('exportModal').classList.remove('active'); }
+
+        // Run immediately when script loads
+        initialize();
     </script>
 </body>
 </html>
