@@ -70,7 +70,7 @@
             background-color: #0f172a;
             border-radius: 9999px;
             z-index: 1;
-            transition: all 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+            transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
             box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
         }
         .dark .nav-slider {
@@ -78,7 +78,7 @@
             box-shadow: 0 2px 8px rgba(241, 245, 249, 0.15);
         }
 
-        /* MOBILE BOTTOM NAV - CLEAN SLIDING */
+        /* MOBILE */
         .mobile-nav {
             position: relative;
             background-color: rgba(255,255,255,0.96);
@@ -118,7 +118,7 @@
             background-color: #2563EB;
             border-radius: 12px;
             z-index: 1;
-            transition: all 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+            transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
         }
         .dark .mobile-slider {
@@ -142,7 +142,8 @@
         <!-- DESKTOP NAV -->
         <nav class="hidden md:block">
             <div class="desktop-nav flex items-center relative" id="desktop-nav-container">
-                <div id="nav-slider" class="nav-slider"></div>
+                <!-- Slider tanpa width hardcoded, biar JS yang atur dari awal -->
+                <div id="nav-slider" class="nav-slider" style="left: 4px;"></div>
                 
                 <button onclick="switchPage('dashboard')" id="nav-dashboard" class="nav-btn active">
                     <i class="fa-solid fa-border-all w-4"></i>
@@ -372,49 +373,45 @@
             }
         }
 
-        // Initialize sliders - INSTANT on load
-        function initSlidersInstant() {
-            // Desktop - Black slider on Dashboard (instant)
-            const deskContainer = document.getElementById('desktop-nav-container');
-            const deskSlider = document.getElementById('nav-slider');
-            const activeDesk = deskContainer.querySelector('.nav-btn.active');
+        function positionSliderExact() {
+            const container = document.getElementById('desktop-nav-container');
+            const slider = document.getElementById('nav-slider');
+            const activeBtn = container.querySelector('.nav-btn.active');
 
-            if (activeDesk && deskSlider) {
-                // Disable transition temporarily
-                deskSlider.style.transition = 'none';
-                
-                const cRect = deskContainer.getBoundingClientRect();
-                const bRect = activeDesk.getBoundingClientRect();
-                
-                deskSlider.style.left = `${bRect.left - cRect.left}px`;
-                deskSlider.style.width = `${bRect.width}px`;
-                
-                // Force reflow then re-enable transition
-                void deskSlider.offsetWidth;
-                
-                setTimeout(() => {
-                    deskSlider.style.transition = 'all 0.32s cubic-bezier(0.32, 0.72, 0, 1)';
-                }, 30);
-            }
+            if (!container || !slider || !activeBtn) return;
 
-            // Mobile
-            const mobContainer = document.getElementById('mobile-nav-container');
-            const mobSlider = document.getElementById('mobile-slider');
-            const activeMob = mobContainer.querySelector('.nav-mob-btn.active');
+            // Disable transition
+            slider.style.transition = 'none';
 
-            if (activeMob && mobSlider) {
-                mobSlider.style.transition = 'none';
-                
-                const cRect = mobContainer.getBoundingClientRect();
-                const bRect = activeMob.getBoundingClientRect();
-                mobSlider.style.left = `${bRect.left - cRect.left}px`;
-                
-                void mobSlider.offsetWidth;
-                
-                setTimeout(() => {
-                    mobSlider.style.transition = 'all 0.32s cubic-bezier(0.32, 0.72, 0, 1)';
-                }, 30);
-            }
+            const containerLeft = container.getBoundingClientRect().left;
+            const btnLeft = activeBtn.getBoundingClientRect().left;
+            const btnWidth = activeBtn.getBoundingClientRect().width;
+
+            slider.style.left = `${btnLeft - containerLeft}px`;
+            slider.style.width = `${btnWidth}px`;
+
+            // Force reflow
+            void slider.offsetWidth;
+
+            // Re-enable transition
+            setTimeout(() => {
+                slider.style.transition = 'all 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
+            }, 10);
+        }
+
+        function initialize() {
+            // Posisikan slider SEBELUM data dimuat
+            positionSliderExact();
+
+            initData();
+            setupSearch();
+
+            document.getElementById('nav-mob-dashboard').classList.add('active');
+
+            // Final exact positioning
+            setTimeout(() => {
+                positionSliderExact();
+            }, 60);
         }
 
         function renderWalletsHTML() {
@@ -511,14 +508,42 @@
         }
 
         function initialize() {
-            // Initialize sliders FIRST (before any async operation)
-            initSlidersInstant();
+            initializeApp();
+        }
+
+        function initializeApp() {
+            // Posisi slider persis sama seperti setelah diklik
+            const container = document.getElementById('desktop-nav-container');
+            const slider = document.getElementById('nav-slider');
+            const activeBtn = container.querySelector('.nav-btn.active');
+
+            if (container && slider && activeBtn) {
+                slider.style.transition = 'none';
+                const cRect = container.getBoundingClientRect();
+                const bRect = activeBtn.getBoundingClientRect();
+                slider.style.left = `${bRect.left - cRect.left}px`;
+                slider.style.width = `${bRect.width}px`;
+                void slider.offsetWidth;
+            }
 
             initData();
             setupSearch();
 
-            // Ensure mobile active state
             document.getElementById('nav-mob-dashboard').classList.add('active');
+
+            setTimeout(() => {
+                const cont = document.getElementById('desktop-nav-container');
+                const slid = document.getElementById('nav-slider');
+                const act = cont.querySelector('.nav-btn.active');
+                if (cont && slid && act) {
+                    slid.style.transition = 'all 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
+                    const cL = cont.getBoundingClientRect().left;
+                    const bL = act.getBoundingClientRect().left;
+                    const bW = act.getBoundingClientRect().width;
+                    slid.style.left = `${bL - cL}px`;
+                    slid.style.width = `${bW}px`;
+                }
+            }, 50);
         }
 
         function openExportModal() { document.getElementById('exportModal').classList.add('active'); }
@@ -527,7 +552,6 @@
         function openAddWalletModal() { alert('Add Wallet modal (demo)'); }
         function exportData(type) { alert('Exporting as ' + type); document.getElementById('exportModal').classList.remove('active'); }
 
-        // Run immediately when script loads
         initialize();
     </script>
 </body>
