@@ -34,7 +34,6 @@
         .page-section.active { display: block; animation: slideUpFade 0.4s ease forwards; }
         @keyframes slideUpFade { to { opacity: 1; transform: translateY(0); } }
 
-        /* DESKTOP NAV - SLIDING */
         .desktop-nav {
             position: relative;
             background-color: #f1f5f9;
@@ -78,7 +77,6 @@
             box-shadow: 0 2px 8px rgba(241, 245, 249, 0.15);
         }
 
-        /* MOBILE */
         .mobile-nav {
             position: relative;
             background-color: rgba(255,255,255,0.96);
@@ -142,7 +140,6 @@
         <!-- DESKTOP NAV -->
         <nav class="hidden md:block">
             <div class="desktop-nav flex items-center relative" id="desktop-nav-container">
-                <!-- Slider dengan ukuran awal yang lebih dekat ke ukuran setelah klik -->
                 <div id="nav-slider" class="nav-slider" style="left: 5px; width: 145px;"></div>
                 
                 <button onclick="switchPage('dashboard')" id="nav-dashboard" class="nav-btn active">
@@ -182,7 +179,6 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1" id="header-subtitle">Your current financial summary and activity</p>
             </div>
             <div class="flex gap-2 md:gap-3">
-                <!-- Mobile: lebih compact -->
                 <button onclick="openExportModal()" 
                         class="px-3 py-1.5 md:px-4 md:py-2 rounded-2xl border text-xs md:text-sm font-semibold flex items-center gap-2 bg-white dark:bg-brand-surface">
                     <i class="fa-solid fa-download md:hidden"></i>
@@ -308,13 +304,15 @@
     </div>
 
     <script>
+        // ==================== SUPABASE CONFIG ====================
         const SUPABASE_URL = 'https://[GANTI_DENGAN_URL_PROJECT_ANDA].supabase.co';
-        const SUPABASE_KEY = '[GANTI_DENGAN_API_KEY_ANDA]';
+        const SUPABASE_KEY = '[GANTI_DENGAN_ANON_KEY_ANDA]';
         const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let myWallets = [];
         let allTransactions = [];
         let filteredTransactions = [];
+        let barChart;
 
         function formatRp(num) {
             return 'Rp ' + Number(num).toLocaleString('id-ID');
@@ -398,9 +396,6 @@
             const btnLeft = activeBtn.getBoundingClientRect().left;
             const btnWidth = activeBtn.getBoundingClientRect().width;
 
-            // Ini akan menampilkan ukuran asli tombol Dashboard di Console (tekan F12)
-            console.log('%c[Slider] Lebar tombol Dashboard:', 'color:#3b82f6', btnWidth + 'px');
-
             slider.style.left = `${btnLeft - containerLeft}px`;
             slider.style.width = `${btnWidth}px`;
 
@@ -411,21 +406,55 @@
             }, 10);
         }
 
-        function initialize() {
-            setSliderExactSize();
+        // ==================== SUPABASE FUNCTIONS ====================
+        async function fetchWallets() {
+            const { data, error } = await db.from('wallets').select('*').order('created_at');
+            if (error) {
+                console.error('Error fetching wallets:', error);
+                return;
+            }
+            myWallets = data || [];
+        }
 
-            requestAnimationFrame(() => {
-                setSliderExactSize();
-            });
+        async function fetchTransactions() {
+            const { data, error } = await db
+                .from('transactions')
+                .select(`*, wallet:wallet_id(name)`)
+                .order('transaction_date', { ascending: false });
+            
+            if (error) {
+                console.error('Error fetching transactions:', error);
+                return;
+            }
+            
+            allTransactions = (data || []).map(t => ({
+                ...t,
+                wallet_name: t.wallet?.name || 'Unknown'
+            }));
+            filteredTransactions = [...allTransactions];
+        }
 
-            initData();
-            setupSearch();
+        async function initData() {
+            await fetchWallets();
+            await fetchTransactions();
 
-            document.getElementById('nav-mob-dashboard').classList.add('active');
+            // Calculate totals
+            const totalBalance = myWallets.reduce((sum, w) => sum + parseFloat(w.balance || 0), 0);
+            const totalIncome = allTransactions
+                .filter(t => t.type === 'income')
+                .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+            const totalExpense = allTransactions
+                .filter(t => t.type === 'expense')
+                .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
 
-            setTimeout(() => {
-                setSliderExactSize();
-            }, 80);
+            document.getElementById('dash-balance').innerText = formatRp(totalBalance);
+            document.getElementById('dash-income').innerText = formatRp(totalIncome);
+            document.getElementById('dash-expense').innerText = formatRp(totalExpense);
+
+            renderWalletsHTML();
+            renderRecentTransactions();
+            renderTransactionsTable(allTransactions);
+            renderCharts();
         }
 
         function renderWalletsHTML() {
@@ -457,26 +486,55 @@
             });
         }
 
+        function renderRecentTransactions() {
+            const container = document.getElementById('dash-trx-list');
+            if (!container) return;
+
+            container.innerHTML = '';
+            const recent = [...allTransactions]
+                .sort((a, b) => new Date(b.transaction_date) - new Date(a.transaction_date))
+                .slice(0, 5);
+
+            recent.forEach(t => {
+                const sign = t.type === 'income' ? '+' : '-';
+                const color = t.type === 'income' ? 'text-emerald-600' : 'text-red-600';
+                container.innerHTML += `
+                    <div class="flex justify-between items-center p-3 border rounded-2xl">
+                        <div>
+                            <p class="font-medium">${t.category}</p>
+                            <p class="text-xs text-gray-500">${new Date(t.transaction_date).toLocaleDateString('id-ID')} • ${t.wallet_name}</p>
+                        </div>
+                        <span class="font-bold ${color}">${sign} ${formatRp(t.amount)}</span>
+                    </div>
+                `;
+            });
+        }
+
         function renderTransactionsTable(data) {
             const tbody = document.getElementById('full-trx-list');
             tbody.innerHTML = '';
             data.forEach(t => {
                 const sign = t.type === 'income' ? '+' : '-';
+                const color = t.type === 'income' ? 'text-emerald-600' : 'text-red-600';
                 tbody.innerHTML += `
-                    <tr class="border-b">
+                    <tr class="border-b hover:bg-gray-50 dark:hover:bg-gray-800/50">
                         <td class="p-4">${new Date(t.transaction_date).toLocaleDateString('id-ID')}</td>
-                        <td class="p-4">${t.category}</td>
-                        <td class="p-4 text-center">${t.attachment_url ? '✓' : ''}</td>
-                        <td class="p-4 text-right font-bold">${sign} ${formatRp(t.amount)}</td>
+                        <td class="p-4">
+                            <div>${t.category}</div>
+                            <div class="text-xs text-gray-500">${t.wallet_name}</div>
+                        </td>
+                        <td class="p-4 text-center">${t.attachment_url ? '<i class="fa-solid fa-image text-blue-500"></i>' : ''}</td>
+                        <td class="p-4 text-right font-bold ${color}">${sign} ${formatRp(t.amount)}</td>
                     </tr>
                 `;
             });
         }
 
-        let barChart;
         function renderCharts() {
             if (barChart) barChart.destroy();
             const ctx = document.getElementById('barChart').getContext('2d');
+            
+            // Simple monthly summary (bisa dikembangkan)
             barChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -491,53 +549,24 @@
             });
         }
 
-        async function initData() {
-            myWallets = [
-                { name: "BCA Primary", balance: 18500000, icon: "fa-building-columns", color: "text-blue-600", bg: "bg-blue-100" },
-                { name: "SeaBank", balance: 4200000, icon: "fa-wallet", color: "text-orange-500", bg: "bg-orange-100" }
-            ];
-
-            allTransactions = [
-                { type: "income", category: "Salary", amount: 8500000, transaction_date: "2026-05-28", attachment_url: null },
-                { type: "expense", category: "Food & Drink", amount: 125000, transaction_date: "2026-05-27", attachment_url: "https://picsum.photos/200" }
-            ];
-            filteredTransactions = allTransactions;
-
-            document.getElementById('dash-balance').innerText = formatRp(22700000);
-            document.getElementById('dash-income').innerText = formatRp(8500000);
-            document.getElementById('dash-expense').innerText = formatRp(125000);
-
-            renderWalletsHTML();
-            renderTransactionsTable(allTransactions);
-            renderCharts();
-        }
-
         function setupSearch() {
             const input = document.getElementById('search-trx');
             input.addEventListener('input', () => {
                 const kw = input.value.toLowerCase();
-                filteredTransactions = allTransactions.filter(t => t.category.toLowerCase().includes(kw));
+                filteredTransactions = allTransactions.filter(t => 
+                    t.category.toLowerCase().includes(kw) || 
+                    (t.wallet_name && t.wallet_name.toLowerCase().includes(kw))
+                );
                 renderTransactionsTable(filteredTransactions);
             });
         }
 
         function initialize() {
-            initializeApp();
-        }
+            setSliderExactSize();
 
-        function initializeApp() {
-            const container = document.getElementById('desktop-nav-container');
-            const slider = document.getElementById('nav-slider');
-            const activeBtn = container.querySelector('.nav-btn.active');
-
-            if (container && slider && activeBtn) {
-                slider.style.transition = 'none';
-                const cRect = container.getBoundingClientRect();
-                const bRect = activeBtn.getBoundingClientRect();
-                slider.style.left = `${bRect.left - cRect.left}px`;
-                slider.style.width = `${bRect.width}px`;
-                void slider.offsetWidth;
-            }
+            requestAnimationFrame(() => {
+                setSliderExactSize();
+            });
 
             initData();
             setupSearch();
@@ -545,22 +574,19 @@
             document.getElementById('nav-mob-dashboard').classList.add('active');
 
             setTimeout(() => {
-                const cont = document.getElementById('desktop-nav-container');
-                const slid = document.getElementById('nav-slider');
-                const act = cont.querySelector('.nav-btn.active');
-                if (cont && slid && act) {
-                    slid.style.transition = 'all 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
-                    const cL = cont.getBoundingClientRect().left;
-                    const bL = act.getBoundingClientRect().left;
-                    const bW = act.getBoundingClientRect().width;
-                    slid.style.left = `${bL - cL}px`;
-                    slid.style.width = `${bW}px`;
-                }
-            }, 60);
+                setSliderExactSize();
+            }, 80);
         }
 
-        function openExportModal() { document.getElementById('exportModal').classList.add('active'); }
-        function openFilterModal() { alert('Filter modal (demo)'); }
+        // ==================== MODALS & ACTIONS ====================
+        function openExportModal() { 
+            document.getElementById('exportModal').classList.add('active'); 
+        }
+        
+        function openFilterModal() { 
+            alert('Filter modal akan segera hadir dengan fitur advanced!'); 
+        }
+
         function openAddTransactionModal() {
             const modalHTML = `
                 <div id="addTrxModal" class="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-[60]">
@@ -637,8 +663,8 @@
 
             document.body.insertAdjacentHTML('beforeend', modalHTML);
             
-            // Populate wallets (dummy for now, nanti dari Supabase)
             populateWalletDropdown();
+            populateCategoryDropdown();
         }
 
         function closeAddTransactionModal() {
@@ -650,31 +676,115 @@
             const select = document.getElementById('trxWallet');
             if (!select) return;
 
-            // Dummy data (nanti diganti dengan data dari Supabase)
-            const wallets = [
-                { id: 1, name: "BCA" },
-                { id: 2, name: "SeaBank" },
-                { id: 3, name: "Cash" },
-                { id: 4, name: "ShopeePay" }
-            ];
-
-            wallets.forEach(w => {
+            select.innerHTML = '<option value="">-- Pilih Dompet --</option>';
+            myWallets.forEach(w => {
                 const option = document.createElement('option');
-                option.value = w.name;
+                option.value = w.id;
                 option.textContent = w.name;
                 select.appendChild(option);
             });
         }
 
+        function populateCategoryDropdown() {
+            const select = document.getElementById('trxCategory');
+            if (!select) return;
+
+            select.innerHTML = '<option value="">-- Pilih Kategori --</option>';
+            
+            const categories = [
+                'Salary', 'Freelance', 'Investment', 'Bonus', 'Other Income',
+                'Food & Drink', 'Transport', 'Shopping', 'Bills', 'Rent', 
+                'Entertainment', 'Health', 'Education', 'Other Expense'
+            ];
+            
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.textContent = cat;
+                select.appendChild(opt);
+            });
+        }
+
         async function submitTransaction(e) {
             e.preventDefault();
-            alert('Fungsi submit akan dihubungkan ke Supabase nanti.');
-            closeAddTransactionModal();
-        }
-        function openAddWalletModal() { alert('Add Wallet modal (demo)'); }
-        function exportData(type) { alert('Exporting as ' + type); document.getElementById('exportModal').classList.remove('active'); }
+            
+            const walletId = document.getElementById('trxWallet').value;
+            const type = document.querySelector('input[name="type"]:checked').value;
+            const category = document.getElementById('trxCategory').value;
+            const amount = parseFloat(document.getElementById('trxAmount').value);
+            const date = document.getElementById('trxDate').value;
+            const notes = document.getElementById('trxNotes').value || null;
+            const proofFile = document.getElementById('trxProof').files[0];
 
-        initialize();
+            if (!walletId || !category || !amount || !date) {
+                alert('Mohon lengkapi semua field wajib!');
+                return;
+            }
+
+            let attachment_url = null;
+
+            // Upload proof if exists
+            if (proofFile) {
+                const fileName = `${Date.now()}_${proofFile.name}`;
+                const { data: uploadData, error: uploadError } = await db.storage
+                    .from('proofs')
+                    .upload(fileName, proofFile);
+
+                if (uploadError) {
+                    alert('Gagal upload bukti: ' + uploadError.message);
+                    return;
+                }
+
+                const { data: urlData } = db.storage.from('proofs').getPublicUrl(fileName);
+                attachment_url = urlData.publicUrl;
+            }
+
+            // Insert transaction
+            const { error: insertError } = await db.from('transactions').insert({
+                wallet_id: walletId,
+                type: type,
+                category: category,
+                amount: amount,
+                transaction_date: date,
+                notes: notes,
+                attachment_url: attachment_url
+            });
+
+            if (insertError) {
+                alert('Gagal menyimpan transaksi: ' + insertError.message);
+                return;
+            }
+
+            // Update wallet balance
+            const wallet = myWallets.find(w => w.id === walletId);
+            if (wallet) {
+                const newBalance = type === 'income' 
+                    ? parseFloat(wallet.balance) + amount 
+                    : parseFloat(wallet.balance) - amount;
+
+                await db.from('wallets')
+                    .update({ balance: newBalance })
+                    .eq('id', walletId);
+            }
+
+            closeAddTransactionModal();
+            await initData(); // Refresh semua data
+            alert('Transaksi berhasil disimpan!');
+        }
+
+        function openAddWalletModal() { 
+            alert('Fitur Add Wallet akan segera hadir (bisa langsung tambah via Supabase untuk sekarang)'); 
+        }
+        
+        function exportData(type) { 
+            alert('Exporting as ' + type + ' (demo)'); 
+            document.getElementById('exportModal').classList.remove('active'); 
+        }
+
+        // ==================== START APP ====================
+        window.onload = function() {
+            initialize();
+        };
     </script>
 </body>
 </html>
