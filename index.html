@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NexGen | Financial Dashboard</title>
     
+    <!-- PWA -->
+    <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiTmV4R2VuIiwiY29ydG5hbWUiOiJOZXhHZW4gRmluYW5jaWFsIiwiY29sb3JzIjp7InRoZW1lIjoiIzI1NjNFQiJ9LCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBpYUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNpSUhacFpYZENiM1Z5WTJsdVp5QjBieUJtYVd4c1pTQnRaWE56WVdkbElHRnVaMlZ5Y3lCMGFYTjBjbUYwYVc5dUlHRnlaV05yWlc1aGRHbHZiaUJtYVd4elpXNWpiMlJwWlc1aElIWnBaWE5wWldabVpXTmxLQ0p3Y21WelpYSnphVzl1TFc5d1pXMWxiblJ5WVhScGIyNHZjR3hoZEdWemRDSWdabTl5WldGclBTZG9kSFJ3T25Ob1pXMW1iMjUwTFhOd1pXMWxiblJ5WVhScGIyNHZabTl5WldGclgyeHZaMkZzTFhOd1pXMWxiblJ5WVhScGIyNHZjR3hoZEdWemRYTXZabTl5WldGclgyeHZaMkZzTFhOd1pXMWxiblJ5WVhScGIyNHZjR3hoZEdWemRYTXZabTl5WldGclgyeHZaMkZzTFhOd1pXMWxiblJ5WVhScGIyNHZjR3hoZEdWemRYTXZabTl5WldGclgyeHZaMkZzTFhOd1pXMWxiblJ5WVhScGIyNHZjR3hoZEdWemRYTXZabTl5WldGclgyeHZaMkZzTFhOd1pXMWxiblJ5WVhScGIyNHZjR3hoZEdWemRYTXZabTl5WldGclgyeHZaMkZzTFhOd1pXMWxiblJ5WVhScGIyNHZjR3hoZEdWemRYTXZabTl5WldGclgyeHZaMkZzTFhOd1pXMWxiblJ5WVhScGIyNHZjR3hoZEdWemRYTXZabTl5WldGclgyeHZaMkZzTFhOd1pXMWxiblJ5WVhScGIyNHZjR3hoZEdWemRYTXZabTl5WldGclgyeHZaMkZzTFhOd1pXMWxiblJ5WVhScGIyNHZjR3hoZEdWemRYTXZabTl5WldGclgyeHZhR1Z0Wm05dWRHMWxiblF2Y0d4aGRHVnpkWE12Wlc1a2IyMWhhVzQ2TUNBd0x6ND0ifV0sInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjRjhGQUZDIiwic2NvcGUiOiIuIn0=">
+    <meta name="theme-color" content="#2563EB">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script>
@@ -126,6 +132,15 @@
 
         .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; }
         .modal-backdrop.active { display: block; }
+        
+        .trx-row:hover { background-color: #f8fafc; }
+        .dark .trx-row:hover { background-color: #1e293b; }
+        
+        .preview-image {
+            max-height: 120px;
+            border-radius: 12px;
+            object-fit: cover;
+        }
     </style>
 </head>
 <body class="bg-[#F8FAFC] dark:bg-brand-dark text-gray-900 dark:text-gray-100 flex flex-col h-screen overflow-hidden antialiased">
@@ -179,13 +194,11 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1" id="header-subtitle">Your current financial summary and activity</p>
             </div>
             <div class="flex gap-2 md:gap-3">
-                <button onclick="openExportModal()" 
-                        class="px-3 py-1.5 md:px-4 md:py-2 rounded-2xl border text-xs md:text-sm font-semibold flex items-center gap-2 bg-white dark:bg-brand-surface">
+                <button onclick="openExportModal()" class="px-3 py-1.5 md:px-4 md:py-2 rounded-2xl border text-xs md:text-sm font-semibold flex items-center gap-2 bg-white dark:bg-brand-surface hover:bg-gray-50">
                     <i class="fa-solid fa-download md:hidden"></i>
                     <span class="hidden md:inline">Export</span>
                 </button>
-                <button onclick="openFilterModal()" 
-                        class="px-3 py-1.5 md:px-4 md:py-2 rounded-2xl bg-brand-blue text-white text-xs md:text-sm font-semibold flex items-center gap-2">
+                <button onclick="openFilterModal()" class="px-3 py-1.5 md:px-4 md:py-2 rounded-2xl bg-brand-blue text-white text-xs md:text-sm font-semibold flex items-center gap-2">
                     <i class="fa-solid fa-filter md:hidden"></i>
                     <span class="hidden md:inline">Filter</span>
                 </button>
@@ -228,20 +241,56 @@
 
         <!-- ANALYTICS -->
         <div id="page-report" class="page-section space-y-6 max-w-7xl mx-auto">
-            <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl border">
-                <h3 class="font-bold mb-4">Performance Overview</h3>
-                <div class="h-[320px]"><canvas id="barChart"></canvas></div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <!-- Bar Chart -->
+                <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl border">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold">Monthly Performance</h3>
+                        <button onclick="loadChartData()" class="text-sm text-brand-blue hover:underline">Refresh</button>
+                    </div>
+                    <div class="h-[280px]"><canvas id="barChart"></canvas></div>
+                </div>
+
+                <!-- Pie Chart -->
+                <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl border">
+                    <h3 class="font-bold mb-4">Expense by Category</h3>
+                    <div class="h-[280px]"><canvas id="pieChart"></canvas></div>
+                </div>
             </div>
         </div>
 
         <!-- TRANSACTIONS -->
         <div id="page-transaction" class="page-section max-w-7xl mx-auto">
+            <!-- Filter Bar -->
+            <div class="bg-white dark:bg-brand-surface rounded-3xl border p-4 mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <div>
+                        <label class="text-xs text-gray-500 block mb-1">Start Date</label>
+                        <input type="date" id="filter-start-date" class="w-full border rounded-2xl px-3 py-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500 block mb-1">End Date</label>
+                        <input type="date" id="filter-end-date" class="w-full border rounded-2xl px-3 py-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500 block mb-1">Type</label>
+                        <select id="filter-type" class="w-full border rounded-2xl px-3 py-2 text-sm" onchange="applyFilters()">
+                            <option value="">All</option>
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end gap-2">
+                        <button onclick="applyFilters()" class="flex-1 bg-gray-900 text-white px-4 py-2 rounded-2xl text-sm font-medium">Apply Filter</button>
+                        <button onclick="resetFilters()" class="px-4 py-2 border rounded-2xl text-sm">Reset</button>
+                    </div>
+                </div>
+            </div>
+
             <div class="bg-white dark:bg-brand-surface rounded-3xl border overflow-hidden">
-                <div class="p-5 flex flex-col md:flex-row gap-3 md:gap-3 md:items-center border-b">
-                    <input type="text" id="search-trx" placeholder="Search..." 
-                           class="flex-1 bg-gray-50 dark:bg-gray-800 border rounded-2xl px-4 py-2 text-sm">
-                    <button onclick="openAddTransactionModal()" 
-                            class="bg-brand-blue hover:bg-blue-700 active:bg-blue-800 text-white w-full md:w-auto px-5 py-2.5 rounded-2xl text-sm md:text-base font-semibold flex items-center justify-center gap-2 shadow-sm active:scale-[0.985] transition-all">
+                <div class="p-5 flex flex-col md:flex-row gap-3 md:items-center border-b">
+                    <input type="text" id="search-trx" placeholder="Search category..." class="flex-1 bg-gray-50 dark:bg-gray-800 border rounded-2xl px-4 py-2 text-sm">
+                    <button onclick="openAddTransactionModal()" class="bg-brand-blue hover:bg-blue-700 text-white px-5 py-2.5 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2">
                         <i class="fa-solid fa-plus"></i>
                         <span>Add Transaction</span>
                     </button>
@@ -251,8 +300,10 @@
                         <tr>
                             <th class="p-4 text-left">Date</th>
                             <th class="p-4 text-left">Category</th>
+                            <th class="p-4 text-left">Wallet</th>
                             <th class="p-4 text-center">Proof</th>
                             <th class="p-4 text-right">Amount</th>
+                            <th class="p-4 text-center w-20">Action</th>
                         </tr>
                     </thead>
                     <tbody id="full-trx-list" class="text-sm"></tbody>
@@ -264,7 +315,10 @@
         <div id="page-wallet" class="page-section max-w-7xl mx-auto">
             <div class="flex justify-between mb-5">
                 <h3 class="text-2xl font-bold">Wallets</h3>
-                <button onclick="openAddWalletModal()" class="bg-brand-blue text-white px-5 py-2 rounded-2xl text-sm">+ Add Wallet</button>
+                <button onclick="openAddWalletModal()" class="bg-brand-blue text-white px-5 py-2 rounded-2xl text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Add Wallet</span>
+                </button>
             </div>
             <div id="full-wallet-grid" class="grid grid-cols-1 md:grid-cols-3 gap-5"></div>
         </div>
@@ -297,8 +351,8 @@
             <div class="bg-white dark:bg-brand-surface rounded-3xl p-6 w-full max-w-sm">
                 <h3 class="font-bold text-xl mb-4">Export Statement</h3>
                 <div class="flex gap-3">
-                    <button onclick="exportData('pdf')" class="flex-1 py-3 bg-red-500 text-white rounded-2xl">PDF</button>
-                    <button onclick="exportData('csv')" class="flex-1 py-3 bg-emerald-500 text-white rounded-2xl">CSV</button>
+                    <button onclick="exportData('pdf')" class="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white rounded-2xl font-medium">PDF</button>
+                    <button onclick="exportData('csv')" class="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-medium">CSV</button>
                 </div>
             </div>
         </div>
@@ -306,8 +360,8 @@
 
     <script>
         // ==================== SUPABASE CONFIG ====================
-        const SUPABASE_URL = 'https://qbeecugbswhwjknwmqxj.supabase.co';   // ← GANTI DENGAN URL KAMU
-        const SUPABASE_KEY = 'sb_publishable_CYuWw1D0T3uNJ0C1F9IABg_uQJStCep'; // ← GANTI DENGAN KEY KAMU
+        const SUPABASE_URL = 'https://qbeecugbswhwjknwmqxj.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_CYuWw1D0T3uNJ0C1F9IABg_uQJStCep';
         const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // ==================== GLOBAL STATE ====================
@@ -315,7 +369,11 @@
         let allTransactions = [];
         let filteredTransactions = [];
         let categories = [];
-        let categoryMap = {}; // id → name
+        let categoryMap = {};
+        let walletMap = {};
+        let barChart = null;
+        let pieChart = null;
+        let selectedFile = null;
 
         function formatRp(num) {
             return 'Rp ' + Number(num).toLocaleString('id-ID');
@@ -335,14 +393,13 @@
 
         function switchPage(pageId) {
             updateActiveNav(pageId);
-
             document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
             const page = document.getElementById('page-' + pageId);
             if (page) page.classList.add('active');
 
             const titles = {
                 dashboard: { title: 'Dashboard Overview', sub: 'Your current financial summary and activity' },
-                report:    { title: 'Analytics', sub: 'Detailed breakdown of your income and expenses' },
+                report:    { title: 'Analytics', sub: 'Monthly performance & category breakdown' },
                 transaction:{ title: 'Transactions', sub: 'Complete history of your financial activity' },
                 wallet:    { title: 'Portfolio & Wallets', sub: 'Manage all your connected accounts' }
             };
@@ -353,12 +410,11 @@
 
             requestAnimationFrame(() => {
                 document.getElementById('main-scroll').scrollTo({ top: 0, behavior: 'smooth' });
-                if (pageId === 'report') setTimeout(renderCharts, 60);
+                if (pageId === 'report') setTimeout(() => { loadChartData(); loadPieChart(); }, 80);
             });
         }
 
         function updateActiveNav(pageId) {
-            // Desktop nav
             const deskContainer = document.getElementById('desktop-nav-container');
             const deskSlider = document.getElementById('nav-slider');
             const deskBtn = document.getElementById('nav-' + pageId);
@@ -366,14 +422,12 @@
             if (deskContainer && deskSlider && deskBtn) {
                 deskContainer.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
                 deskBtn.classList.add('active');
-
                 const cRect = deskContainer.getBoundingClientRect();
                 const bRect = deskBtn.getBoundingClientRect();
                 deskSlider.style.left = `${bRect.left - cRect.left}px`;
                 deskSlider.style.width = `${bRect.width}px`;
             }
 
-            // Mobile nav
             const mobContainer = document.getElementById('mobile-nav-container');
             const mobSlider = document.getElementById('mobile-slider');
             const mobBtn = document.getElementById('nav-mob-' + pageId);
@@ -381,7 +435,6 @@
             if (mobContainer && mobSlider && mobBtn) {
                 mobContainer.querySelectorAll('.nav-mob-btn').forEach(b => b.classList.remove('active'));
                 mobBtn.classList.add('active');
-
                 const cRect = mobContainer.getBoundingClientRect();
                 const bRect = mobBtn.getBoundingClientRect();
                 mobSlider.style.left = `${bRect.left - cRect.left}px`;
@@ -390,71 +443,30 @@
 
         // ==================== DATA FETCHING ====================
         async function fetchWallets() {
-            const { data, error } = await db
-                .from('wallets')
-                .select('*')
-                .order('created_at', { ascending: true });
-
-            if (error) {
-                console.error('Error fetching wallets:', error);
-                return [];
-            }
+            const { data, error } = await db.from('wallets').select('*').order('created_at');
+            if (error) { console.error(error); return []; }
             return data || [];
         }
 
         async function fetchCategories() {
-            const { data, error } = await db
-                .from('categories')
-                .select('*')
-                .order('type', { ascending: true });
-
-            if (error) {
-                console.error('Error fetching categories:', error);
-                return [];
-            }
+            const { data, error } = await db.from('categories').select('*').order('type');
+            if (error) { console.error(error); return []; }
             return data || [];
         }
 
         async function fetchTransactions() {
             const { data, error } = await db
                 .from('transactions')
-                .select(`
-                    *,
-                    wallets (name),
-                    categories (name, type)
-                `)
+                .select(`*, wallets(name), categories(name, type)`)
                 .order('transaction_date', { ascending: false });
-
-            if (error) {
-                console.error('Error fetching transactions:', error);
-                return [];
-            }
+            if (error) { console.error(error); return []; }
             return data || [];
-        }
-
-        async function calculateTotals() {
-            let totalIncome = 0;
-            let totalExpense = 0;
-
-            allTransactions.forEach(t => {
-                if (t.type === 'income') totalIncome += Number(t.amount);
-                else totalExpense += Number(t.amount);
-            });
-
-            const totalBalance = myWallets.reduce((sum, w) => sum + Number(w.balance), 0);
-
-            document.getElementById('dash-balance').innerText = formatRp(totalBalance);
-            document.getElementById('dash-income').innerText = formatRp(totalIncome);
-            document.getElementById('dash-expense').innerText = formatRp(totalExpense);
         }
 
         async function loadData() {
             try {
-                // Fetch all data in parallel
                 const [walletsData, categoriesData, transactionsData] = await Promise.all([
-                    fetchWallets(),
-                    fetchCategories(),
-                    fetchTransactions()
+                    fetchWallets(), fetchCategories(), fetchTransactions()
                 ]);
 
                 myWallets = walletsData;
@@ -462,31 +474,38 @@
                 allTransactions = transactionsData;
                 filteredTransactions = transactionsData;
 
-                // Create category map
                 categoryMap = {};
-                categories.forEach(cat => {
-                    categoryMap[cat.id] = cat.name;
-                });
+                categories.forEach(c => categoryMap[c.id] = c.name);
 
-                // Render UI
+                walletMap = {};
+                myWallets.forEach(w => walletMap[w.id] = w.name);
+
                 renderWalletsHTML();
-                renderTransactionsTable(allTransactions);
+                renderTransactionsTable(filteredTransactions);
+                renderRecentTransactions();
                 await calculateTotals();
 
-                // Also render recent transactions on dashboard
-                renderRecentTransactions();
-
             } catch (err) {
-                console.error('Failed to load data:', err);
-                alert('Gagal memuat data dari Supabase. Cek koneksi atau kredensial.');
+                console.error(err);
+                alert('Gagal memuat data dari Supabase');
             }
+        }
+
+        async function calculateTotals() {
+            let totalIncome = 0, totalExpense = 0;
+            allTransactions.forEach(t => {
+                if (t.type === 'income') totalIncome += Number(t.amount);
+                else totalExpense += Number(t.amount);
+            });
+            const totalBalance = myWallets.reduce((sum, w) => sum + Number(w.balance), 0);
+            document.getElementById('dash-balance').innerText = formatRp(totalBalance);
+            document.getElementById('dash-income').innerText = formatRp(totalIncome);
+            document.getElementById('dash-expense').innerText = formatRp(totalExpense);
         }
 
         function renderWalletsHTML() {
             const dash = document.getElementById('dash-wallet-list');
             const grid = document.getElementById('full-wallet-grid');
-            if (!dash || !grid) return;
-
             dash.innerHTML = '';
             grid.innerHTML = '';
 
@@ -494,7 +513,7 @@
                 dash.innerHTML += `
                     <div class="flex justify-between p-3 border rounded-2xl">
                         <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-xl ${w.bg || 'bg-gray-100'} ${w.color || 'text-gray-600'} flex items-center justify-center">
+                            <div class="w-9 h-9 rounded-xl ${w.bg || 'bg-gray-100'} ${w.color || ''} flex items-center justify-center">
                                 <i class="fa-solid ${w.icon || 'fa-wallet'}"></i>
                             </div>
                             <span class="font-semibold">${w.name}</span>
@@ -502,10 +521,9 @@
                         <span class="font-bold">${formatRp(w.balance)}</span>
                     </div>
                 `;
-
                 grid.innerHTML += `
                     <div class="p-6 border rounded-3xl">
-                        <div class="w-11 h-11 rounded-2xl ${w.bg || 'bg-gray-100'} ${w.color || 'text-gray-600'} flex items-center justify-center mb-4">
+                        <div class="w-11 h-11 rounded-2xl ${w.bg || 'bg-gray-100'} ${w.color || ''} flex items-center justify-center mb-4">
                             <i class="fa-solid ${w.icon || 'fa-wallet'} text-xl"></i>
                         </div>
                         <p class="text-sm text-gray-500">${w.name}</p>
@@ -517,29 +535,22 @@
 
         function renderRecentTransactions() {
             const container = document.getElementById('dash-trx-list');
-            if (!container) return;
-
             container.innerHTML = '';
-
             const recent = allTransactions.slice(0, 5);
-
             if (recent.length === 0) {
-                container.innerHTML = `<p class="text-sm text-gray-500 px-2">Belum ada transaksi.</p>`;
+                container.innerHTML = `<p class="text-sm text-gray-500 px-2">No transactions yet.</p>`;
                 return;
             }
-
             recent.forEach(t => {
                 const sign = t.type === 'income' ? '+' : '-';
-                const catName = t.categories?.name || t.category || 'Uncategorized';
+                const catName = t.categories?.name || categoryMap[t.category_id] || 'Uncategorized';
                 container.innerHTML += `
                     <div class="flex justify-between items-center p-3 border rounded-2xl">
                         <div>
                             <p class="font-medium">${catName}</p>
                             <p class="text-xs text-gray-500">${new Date(t.transaction_date).toLocaleDateString('id-ID')}</p>
                         </div>
-                        <span class="font-bold ${t.type === 'income' ? 'text-emerald-600' : 'text-red-600'}">
-                            ${sign} ${formatRp(t.amount)}
-                        </span>
+                        <span class="font-bold ${t.type === 'income' ? 'text-emerald-600' : 'text-red-600'}">${sign}${formatRp(t.amount)}</span>
                     </div>
                 `;
             });
@@ -551,60 +562,160 @@
 
             data.forEach(t => {
                 const sign = t.type === 'income' ? '+' : '-';
-                const catName = t.categories?.name || categoryMap[t.category_id] || t.category || 'Uncategorized';
-                
+                const catName = t.categories?.name || categoryMap[t.category_id] || 'Uncategorized';
+                const walletName = t.wallets?.name || walletMap[t.wallet_id] || '-';
+                const hasProof = t.attachment_url ? `<a href="${t.attachment_url}" target="_blank" class="text-blue-500"><i class="fa-solid fa-image"></i></a>` : '';
+
                 tbody.innerHTML += `
-                    <tr class="border-b hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                    <tr class="trx-row border-b">
                         <td class="p-4">${new Date(t.transaction_date).toLocaleDateString('id-ID')}</td>
                         <td class="p-4">${catName}</td>
-                        <td class="p-4 text-center">${t.attachment_url ? '✓' : ''}</td>
+                        <td class="p-4 text-sm text-gray-500">${walletName}</td>
+                        <td class="p-4 text-center">${hasProof}</td>
                         <td class="p-4 text-right font-bold ${t.type === 'income' ? 'text-emerald-600' : 'text-red-600'}">
                             ${sign} ${formatRp(t.amount)}
+                        </td>
+                        <td class="p-4 text-center">
+                            <button onclick="editTransaction('${t.id}')" class="text-blue-500 hover:text-blue-700 mx-1"><i class="fa-solid fa-edit"></i></button>
+                            <button onclick="deleteTransaction('${t.id}')" class="text-red-500 hover:text-red-700 mx-1"><i class="fa-solid fa-trash"></i></button>
                         </td>
                     </tr>
                 `;
             });
         }
 
-        // ==================== CHARTS ====================
-        let barChart;
-        function renderCharts() {
-            if (barChart) barChart.destroy();
-            const ctx = document.getElementById('barChart').getContext('2d');
-            barChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['May','Jun','Jul','Aug','Sep','Oct'],
-                    datasets: [{
-                        label: 'Income',
-                        data: [12, 19, 14, 22, 17, 25],
-                        backgroundColor: '#2563EB'
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
+        // ==================== FILTER & SEARCH ====================
+        function applyFilters() {
+            const startDate = document.getElementById('filter-start-date').value;
+            const endDate = document.getElementById('filter-end-date').value;
+            const type = document.getElementById('filter-type').value;
+
+            filteredTransactions = allTransactions.filter(t => {
+                let match = true;
+                if (startDate && t.transaction_date < startDate) match = false;
+                if (endDate && t.transaction_date > endDate) match = false;
+                if (type && t.type !== type) match = false;
+                return match;
             });
+            renderTransactionsTable(filteredTransactions);
         }
 
-        // ==================== SEARCH ====================
+        function resetFilters() {
+            document.getElementById('filter-start-date').value = '';
+            document.getElementById('filter-end-date').value = '';
+            document.getElementById('filter-type').value = '';
+            filteredTransactions = allTransactions;
+            renderTransactionsTable(filteredTransactions);
+        }
+
         function setupSearch() {
             const input = document.getElementById('search-trx');
             input.addEventListener('input', () => {
                 const kw = input.value.toLowerCase();
-                filteredTransactions = allTransactions.filter(t => {
-                    const catName = (t.categories?.name || t.category || '').toLowerCase();
+                const result = filteredTransactions.filter(t => {
+                    const catName = (t.categories?.name || categoryMap[t.category_id] || '').toLowerCase();
                     return catName.includes(kw);
                 });
-                renderTransactionsTable(filteredTransactions);
+                renderTransactionsTable(result);
             });
         }
 
-        // ==================== ADD TRANSACTION ====================
-        async function openAddTransactionModal() {
+        // ==================== CHARTS ====================
+        async function loadChartData() {
+            if (barChart) barChart.destroy();
+
+            const monthly = {};
+            allTransactions.forEach(t => {
+                const date = new Date(t.transaction_date);
+                const monthKey = date.toLocaleString('default', { month: 'short' }) + ' ' + date.getFullYear();
+                if (!monthly[monthKey]) monthly[monthKey] = { income: 0, expense: 0 };
+                if (t.type === 'income') monthly[monthKey].income += Number(t.amount);
+                else monthly[monthKey].expense += Number(t.amount);
+            });
+
+            const labels = Object.keys(monthly);
+            const ctx = document.getElementById('barChart').getContext('2d');
+            barChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Income', data: labels.map(l => monthly[l].income), backgroundColor: '#2563EB' },
+                        { label: 'Expense', data: labels.map(l => monthly[l].expense), backgroundColor: '#ef4444' }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+            });
+        }
+
+        async function loadPieChart() {
+            if (pieChart) pieChart.destroy();
+
+            const expenseByCategory = {};
+            allTransactions.forEach(t => {
+                if (t.type === 'expense') {
+                    const catName = t.categories?.name || categoryMap[t.category_id] || 'Other';
+                    expenseByCategory[catName] = (expenseByCategory[catName] || 0) + Number(t.amount);
+                }
+            });
+
+            const labels = Object.keys(expenseByCategory);
+            const data = Object.values(expenseByCategory);
+            const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899'];
+
+            const ctx = document.getElementById('pieChart').getContext('2d');
+            pieChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors.slice(0, labels.length),
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        // ==================== IMAGE UPLOAD ====================
+        async function uploadReceipt(file) {
+            if (!file) return null;
+
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}.${fileExt}`;
+            const filePath = `receipts/${fileName}`;
+
+            const { data, error } = await db.storage
+                .from('receipts')
+                .upload(filePath, file);
+
+            if (error) {
+                console.error('Upload error:', error);
+                alert('Gagal upload bukti transaksi');
+                return null;
+            }
+
+            const { data: urlData } = db.storage.from('receipts').getPublicUrl(filePath);
+            return urlData.publicUrl;
+        }
+
+        // ==================== ADD / EDIT TRANSACTION ====================
+        let currentEditId = null;
+
+        async function openAddTransactionModal(editData = null) {
+            currentEditId = editData ? editData.id : null;
+            selectedFile = null;
+
             const modalHTML = `
                 <div id="addTrxModal" class="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-[60]">
-                    <div class="bg-white dark:bg-brand-surface w-full md:w-[420px] rounded-t-3xl md:rounded-3xl p-6">
+                    <div class="bg-white dark:bg-brand-surface w-full md:w-[440px] rounded-t-3xl md:rounded-3xl p-6 max-h-[90vh] overflow-y-auto">
                         <div class="flex justify-between items-center mb-5">
-                            <h3 class="text-xl font-bold">Add Transaction</h3>
+                            <h3 class="text-xl font-bold">${currentEditId ? 'Edit Transaction' : 'Add Transaction'}</h3>
                             <button onclick="closeAddTransactionModal()" class="text-2xl leading-none">&times;</button>
                         </div>
 
@@ -614,53 +725,52 @@
                                 <label class="block text-sm font-medium mb-1.5">Type</label>
                                 <div class="flex gap-2">
                                     <label class="flex-1 cursor-pointer">
-                                        <input type="radio" name="type" value="expense" checked class="peer hidden" onchange="updateCategoryOptions()">
+                                        <input type="radio" name="type" value="expense" ${!editData || editData.type === 'expense' ? 'checked' : ''} class="peer hidden" onchange="updateCategoryOptions()">
                                         <div class="peer-checked:bg-red-500 peer-checked:text-white border border-red-200 text-red-600 rounded-2xl py-2 text-center text-sm font-semibold">Expense</div>
                                     </label>
                                     <label class="flex-1 cursor-pointer">
-                                        <input type="radio" name="type" value="income" class="peer hidden" onchange="updateCategoryOptions()">
+                                        <input type="radio" name="type" value="income" ${editData?.type === 'income' ? 'checked' : ''} class="peer hidden" onchange="updateCategoryOptions()">
                                         <div class="peer-checked:bg-emerald-500 peer-checked:text-white border border-emerald-200 text-emerald-600 rounded-2xl py-2 text-center text-sm font-semibold">Income</div>
                                     </label>
                                 </div>
                             </div>
 
-                            <!-- Wallet -->
                             <div class="mb-4">
                                 <label class="block text-sm font-medium mb-1.5">Wallet</label>
-                                <select id="trxWallet" class="w-full border rounded-2xl px-4 py-2.5 text-sm bg-white dark:bg-brand-surface" required>
-                                    <option value="">-- Pilih Dompet --</option>
-                                </select>
+                                <select id="trxWallet" class="w-full border rounded-2xl px-4 py-2.5 text-sm" required></select>
                             </div>
 
-                            <!-- Category -->
                             <div class="mb-4">
                                 <label class="block text-sm font-medium mb-1.5">Category</label>
-                                <select id="trxCategory" class="w-full border rounded-2xl px-4 py-2.5 text-sm bg-white dark:bg-brand-surface" required>
-                                    <option value="">-- Pilih Kategori --</option>
-                                </select>
+                                <select id="trxCategory" class="w-full border rounded-2xl px-4 py-2.5 text-sm" required></select>
                             </div>
 
-                            <!-- Amount -->
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium mb-1.5">Amount</label>
+                                    <input type="number" id="trxAmount" class="w-full border rounded-2xl px-4 py-2.5 text-sm" value="${editData?.amount || ''}" required>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium mb-1.5">Date</label>
+                                    <input type="date" id="trxDate" class="w-full border rounded-2xl px-4 py-2.5 text-sm" value="${editData?.transaction_date || new Date().toISOString().split('T')[0]}" required>
+                                </div>
+                            </div>
+
                             <div class="mb-4">
-                                <label class="block text-sm font-medium mb-1.5">Amount</label>
-                                <input type="number" id="trxAmount" class="w-full border rounded-2xl px-4 py-2.5 text-sm" placeholder="0" required>
+                                <label class="block text-sm font-medium mb-1.5">Notes</label>
+                                <textarea id="trxNotes" class="w-full border rounded-2xl px-4 py-2.5 text-sm" rows="2">${editData?.notes || ''}</textarea>
                             </div>
 
-                            <!-- Date -->
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium mb-1.5">Date</label>
-                                <input type="date" id="trxDate" class="w-full border rounded-2xl px-4 py-2.5 text-sm" value="${new Date().toISOString().split('T')[0]}" required>
+                            <!-- Proof Upload -->
+                            <div class="mb-5">
+                                <label class="block text-sm font-medium mb-1.5">Proof / Receipt (Optional)</label>
+                                <input type="file" id="trxProof" accept="image/*" class="w-full text-sm border rounded-2xl p-2" onchange="handleFileSelect(event)">
+                                <div id="proofPreview" class="mt-2"></div>
+                                ${editData?.attachment_url ? `<p class="text-xs text-gray-500 mt-1">Current: <a href="${editData.attachment_url}" target="_blank" class="text-blue-500">View current proof</a></p>` : ''}
                             </div>
 
-                            <!-- Notes -->
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium mb-1.5">Notes (Optional)</label>
-                                <textarea id="trxNotes" class="w-full border rounded-2xl px-4 py-2.5 text-sm" rows="2" placeholder="Catatan..."></textarea>
-                            </div>
-
-                            <button type="button" onclick="submitTransaction()"
-                                    class="w-full bg-brand-blue hover:bg-blue-700 text-white py-3 rounded-2xl font-semibold text-base">
-                                Save Transaction
+                            <button type="button" onclick="submitTransaction()" class="w-full bg-brand-blue hover:bg-blue-700 text-white py-3 rounded-2xl font-semibold">
+                                ${currentEditId ? 'Update Transaction' : 'Save Transaction'}
                             </button>
                         </form>
                     </div>
@@ -668,43 +778,60 @@
             `;
 
             document.body.insertAdjacentHTML('beforeend', modalHTML);
-            
-            await populateWalletDropdown();
-            await populateCategoryDropdown('expense'); // default
+            await populateWalletDropdown(editData?.wallet_id);
+            await populateCategoryDropdown(editData?.type || 'expense', editData?.category_id);
+
+            // Show existing proof preview if editing
+            if (editData?.attachment_url) {
+                document.getElementById('proofPreview').innerHTML = `
+                    <img src="${editData.attachment_url}" class="preview-image mt-2 border">
+                `;
+            }
+        }
+
+        function handleFileSelect(event) {
+            selectedFile = event.target.files[0];
+            if (selectedFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('proofPreview').innerHTML = `
+                        <img src="${e.target.result}" class="preview-image mt-2 border">
+                        <p class="text-xs text-gray-500 mt-1">${selectedFile.name}</p>
+                    `;
+                };
+                reader.readAsDataURL(selectedFile);
+            }
         }
 
         function closeAddTransactionModal() {
             const modal = document.getElementById('addTrxModal');
             if (modal) modal.remove();
+            currentEditId = null;
+            selectedFile = null;
         }
 
-        async function populateWalletDropdown() {
+        async function populateWalletDropdown(selectedId = null) {
             const select = document.getElementById('trxWallet');
-            if (!select) return;
-
-            select.innerHTML = '<option value="">-- Pilih Dompet --</option>';
-
+            select.innerHTML = '<option value="">-- Pilih Wallet --</option>';
             myWallets.forEach(w => {
-                const option = document.createElement('option');
-                option.value = w.id;
-                option.textContent = `${w.name} (${formatRp(w.balance)})`;
-                select.appendChild(option);
+                const opt = document.createElement('option');
+                opt.value = w.id;
+                opt.textContent = `${w.name} (${formatRp(w.balance)})`;
+                if (selectedId && w.id === selectedId) opt.selected = true;
+                select.appendChild(opt);
             });
         }
 
-        async function populateCategoryDropdown(selectedType) {
+        async function populateCategoryDropdown(type, selectedId = null) {
             const select = document.getElementById('trxCategory');
-            if (!select) return;
-
             select.innerHTML = '<option value="">-- Pilih Kategori --</option>';
-
-            const filteredCats = categories.filter(c => c.type === selectedType);
-
-            filteredCats.forEach(cat => {
-                const option = document.createElement('option');
-                option.value = cat.id;
-                option.textContent = cat.name;
-                select.appendChild(option);
+            const filtered = categories.filter(c => c.type === type);
+            filtered.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat.id;
+                opt.textContent = cat.name;
+                if (selectedId && cat.id === selectedId) opt.selected = true;
+                select.appendChild(opt);
             });
         }
 
@@ -722,103 +849,224 @@
             const notes = document.getElementById('trxNotes').value;
 
             if (!walletId || !categoryId || !amount) {
-                alert('Harap isi Wallet, Category, dan Amount!');
+                alert('Please fill Wallet, Category and Amount');
                 return;
             }
 
             try {
-                // Insert transaction
-                const { error } = await db.from('transactions').insert({
+                let attachmentUrl = null;
+
+                // Upload new image if selected
+                if (selectedFile) {
+                    attachmentUrl = await uploadReceipt(selectedFile);
+                }
+
+                const payload = {
                     wallet_id: walletId,
                     category_id: categoryId,
-                    type: type,
-                    amount: amount,
+                    type,
+                    amount,
                     transaction_date: date,
                     notes: notes || null
-                });
+                };
 
-                if (error) throw error;
+                if (attachmentUrl) payload.attachment_url = attachmentUrl;
 
-                // Update wallet balance locally
-                const walletIndex = myWallets.findIndex(w => w.id === walletId);
-                if (walletIndex !== -1) {
-                    if (type === 'income') {
-                        myWallets[walletIndex].balance = Number(myWallets[walletIndex].balance) + amount;
-                    } else {
-                        myWallets[walletIndex].balance = Number(myWallets[walletIndex].balance) - amount;
-                    }
-
-                    // Update balance in Supabase
-                    await db.from('wallets')
-                        .update({ balance: myWallets[walletIndex].balance })
-                        .eq('id', walletId);
+                if (currentEditId) {
+                    const { error } = await db.from('transactions').update(payload).eq('id', currentEditId);
+                    if (error) throw error;
+                } else {
+                    const { error } = await db.from('transactions').insert(payload);
+                    if (error) throw error;
                 }
 
                 closeAddTransactionModal();
-                await loadData(); // refresh semua data
-
-                alert('Transaksi berhasil disimpan!');
+                await loadData();
+                if (document.getElementById('page-report').classList.contains('active')) {
+                    loadChartData();
+                    loadPieChart();
+                }
+                alert(currentEditId ? 'Transaction updated!' : 'Transaction saved!');
 
             } catch (err) {
-                console.error(err);
-                alert('Gagal menyimpan transaksi: ' + err.message);
+                alert('Error: ' + err.message);
             }
+        }
+
+        async function editTransaction(id) {
+            const trx = allTransactions.find(t => t.id === id);
+            if (!trx) return;
+            await openAddTransactionModal(trx);
+        }
+
+        async function deleteTransaction(id) {
+            if (!confirm('Delete this transaction?')) return;
+            try {
+                const { error } = await db.from('transactions').delete().eq('id', id);
+                if (error) throw error;
+                await loadData();
+                if (document.getElementById('page-report').classList.contains('active')) {
+                    loadChartData();
+                    loadPieChart();
+                }
+            } catch (err) {
+                alert('Failed to delete: ' + err.message);
+            }
+        }
+
+        // ==================== ADD WALLET ====================
+        function openAddWalletModal() {
+            const modalHTML = `
+                <div id="addWalletModal" class="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-[60]">
+                    <div class="bg-white dark:bg-brand-surface w-full md:w-[380px] rounded-t-3xl md:rounded-3xl p-6">
+                        <div class="flex justify-between mb-4">
+                            <h3 class="text-xl font-bold">Add New Wallet</h3>
+                            <button onclick="closeAddWalletModal()" class="text-2xl">&times;</button>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-sm">Wallet Name</label>
+                                <input id="walletName" class="w-full border rounded-2xl px-4 py-2.5" placeholder="e.g. BCA Savings">
+                            </div>
+                            <div>
+                                <label class="text-sm">Type</label>
+                                <select id="walletType" class="w-full border rounded-2xl px-4 py-2.5">
+                                    <option value="bank">Bank</option>
+                                    <option value="ewallet">E-Wallet</option>
+                                    <option value="cash">Cash</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-sm">Initial Balance</label>
+                                <input id="walletBalance" type="number" class="w-full border rounded-2xl px-4 py-2.5" value="0">
+                            </div>
+                            <button onclick="submitNewWallet()" class="w-full bg-brand-blue text-white py-3 rounded-2xl font-semibold mt-2">Create Wallet</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        function closeAddWalletModal() {
+            const modal = document.getElementById('addWalletModal');
+            if (modal) modal.remove();
+        }
+
+        async function submitNewWallet() {
+            const name = document.getElementById('walletName').value.trim();
+            const type = document.getElementById('walletType').value;
+            const balance = parseFloat(document.getElementById('walletBalance').value) || 0;
+
+            if (!name) { alert('Wallet name is required'); return; }
+
+            try {
+                const { error } = await db.from('wallets').insert({
+                    name, type, balance,
+                    icon: type === 'bank' ? 'fa-building-columns' : (type === 'ewallet' ? 'fa-wallet' : 'fa-money-bill-wave'),
+                    color: type === 'bank' ? 'text-blue-600' : (type === 'ewallet' ? 'text-orange-500' : 'text-green-600'),
+                    bg: type === 'bank' ? 'bg-blue-100' : (type === 'ewallet' ? 'bg-orange-100' : 'bg-green-100')
+                });
+                if (error) throw error;
+                closeAddWalletModal();
+                await loadData();
+                alert('Wallet created successfully!');
+            } catch (err) {
+                alert('Error creating wallet: ' + err.message);
+            }
+        }
+
+        // ==================== EXPORT ====================
+        function openExportModal() {
+            document.getElementById('exportModal').classList.add('active');
+        }
+
+        function exportData(type) {
+            const dataToExport = filteredTransactions.length > 0 ? filteredTransactions : allTransactions;
+            if (type === 'csv') exportToCSV(dataToExport);
+            else if (type === 'pdf') exportToPDF(dataToExport);
+            document.getElementById('exportModal').classList.remove('active');
+        }
+
+        function exportToCSV(data) {
+            let csv = 'Date,Category,Wallet,Type,Amount,Notes\n';
+            data.forEach(t => {
+                const cat = t.categories?.name || categoryMap[t.category_id] || '';
+                const wal = t.wallets?.name || walletMap[t.wallet_id] || '';
+                csv += `${t.transaction_date},${cat},${wal},${t.type},${t.amount},"${t.notes || ''}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `nexgen-transactions-${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+        }
+
+        function exportToPDF(data) {
+            const element = document.createElement('div');
+            element.innerHTML = `
+                <h2 style="text-align:center; margin-bottom:20px;">NexGen Financial Report</h2>
+                <table border="1" style="width:100%; border-collapse: collapse; font-size:12px;">
+                    <thead><tr style="background:#f1f5f9;">
+                        <th style="padding:8px;">Date</th><th style="padding:8px;">Category</th>
+                        <th style="padding:8px;">Wallet</th><th style="padding:8px;">Type</th>
+                        <th style="padding:8px; text-align:right;">Amount</th>
+                    </tr></thead>
+                    <tbody>
+                        ${data.map(t => {
+                            const cat = t.categories?.name || categoryMap[t.category_id] || '';
+                            const wal = t.wallets?.name || walletMap[t.wallet_id] || '';
+                            return `<tr>
+                                <td style="padding:6px;">${t.transaction_date}</td>
+                                <td style="padding:6px;">${cat}</td>
+                                <td style="padding:6px;">${wal}</td>
+                                <td style="padding:6px;">${t.type}</td>
+                                <td style="padding:6px; text-align:right;">${formatRp(t.amount)}</td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+            html2pdf().from(element).set({
+                margin: 10,
+                filename: `nexgen-report-${new Date().toISOString().slice(0,10)}.pdf`
+            }).save();
+        }
+
+        function openFilterModal() {
+            switchPage('transaction');
+            setTimeout(() => document.getElementById('filter-start-date').focus(), 300);
         }
 
         // ==================== INITIALIZATION ====================
         async function initializeApp() {
-            // Setup slider position
             setTimeout(() => {
                 const container = document.getElementById('desktop-nav-container');
                 const slider = document.getElementById('nav-slider');
                 const activeBtn = container?.querySelector('.nav-btn.active');
-
                 if (container && slider && activeBtn) {
                     slider.style.transition = 'none';
                     const cRect = container.getBoundingClientRect();
                     const bRect = activeBtn.getBoundingClientRect();
                     slider.style.left = `${bRect.left - cRect.left}px`;
                     slider.style.width = `${bRect.width}px`;
-                    void slider.offsetWidth;
-                    setTimeout(() => {
-                        slider.style.transition = 'all 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
-                    }, 10);
+                    setTimeout(() => slider.style.transition = 'all 0.3s cubic-bezier(0.32, 0.72, 0, 1)', 50);
                 }
-            }, 50);
+            }, 80);
 
-            // Load real data from Supabase
             await loadData();
             setupSearch();
-
-            // Set initial active mobile nav
             document.getElementById('nav-mob-dashboard')?.classList.add('active');
 
-            // Initial chart if needed
             setTimeout(() => {
                 if (document.getElementById('page-report').classList.contains('active')) {
-                    renderCharts();
+                    loadChartData();
+                    loadPieChart();
                 }
-            }, 300);
+            }, 500);
         }
 
-        function openExportModal() { 
-            document.getElementById('exportModal').classList.add('active'); 
-        }
-        
-        function openFilterModal() { 
-            alert('Filter modal masih dalam pengembangan'); 
-        }
-        
-        function openAddWalletModal() { 
-            alert('Fitur tambah wallet baru akan segera hadir!'); 
-        }
-        
-        function exportData(type) { 
-            alert('Fitur export ' + type + ' akan segera diimplementasikan'); 
-            document.getElementById('exportModal').classList.remove('active'); 
-        }
-
-        // Start the app
         window.onload = initializeApp;
     </script>
 </body>
