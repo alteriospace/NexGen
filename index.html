@@ -759,10 +759,147 @@
             }
         }
 
-        function openAddWalletModal() { alert('Fitur tambah wallet siap dikembangkan'); }
-        function openFilterModal() { switchPage('transaction'); }
-        function openExportModal() { document.getElementById('exportModal').classList.add('active'); }
-        function exportData(type) { alert('Exporting as ' + type); document.getElementById('exportModal').classList.remove('active'); }
+        function openAddWalletModal() {
+            const modalHTML = `
+                <div id="addWalletModal" class="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-[60]">
+                    <div class="bg-white dark:bg-slate-900 w-full md:w-[380px] rounded-t-3xl md:rounded-3xl p-6">
+                        <div class="flex justify-between mb-4">
+                            <h3 class="text-xl font-bold">Add New Wallet</h3>
+                            <button onclick="closeAddWalletModal()" class="text-2xl">&times;</button>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-sm">Wallet Name</label>
+                                <input id="walletName" class="w-full border rounded-2xl px-4 py-2.5 dark:bg-slate-800" placeholder="e.g. BCA Savings">
+                            </div>
+                            <div>
+                                <label class="text-sm">Type</label>
+                                <select id="walletType" class="w-full border rounded-2xl px-4 py-2.5 dark:bg-slate-800">
+                                    <option value="bank">Bank</option>
+                                    <option value="ewallet">E-Wallet</option>
+                                    <option value="cash">Cash</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-sm">Initial Balance</label>
+                                <input id="walletBalance" type="number" class="w-full border rounded-2xl px-4 py-2.5 dark:bg-slate-800" value="0">
+                            </div>
+                            <button onclick="submitNewWallet()" class="w-full bg-brand-blue text-white py-3 rounded-2xl font-semibold mt-2">
+                                Create Wallet
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        function closeAddWalletModal() {
+            const modal = document.getElementById('addWalletModal');
+            if (modal) modal.remove();
+        }
+
+        async function submitNewWallet() {
+            const name = document.getElementById('walletName').value.trim();
+            const type = document.getElementById('walletType').value;
+            const balance = parseFloat(document.getElementById('walletBalance').value) || 0;
+
+            if (!name) {
+                alert('Wallet name is required');
+                return;
+            }
+
+            try {
+                const { error } = await db.from('wallets').insert({
+                    name,
+                    type,
+                    balance,
+                    icon: type === 'bank' ? 'fa-building-columns' : (type === 'ewallet' ? 'fa-wallet' : 'fa-money-bill-wave'),
+                    color: type === 'bank' ? 'text-blue-600' : (type === 'ewallet' ? 'text-orange-500' : 'text-emerald-600'),
+                    bg: type === 'bank' ? 'bg-blue-100' : (type === 'ewallet' ? 'bg-orange-100' : 'bg-emerald-100')
+                });
+
+                if (error) throw error;
+
+                closeAddWalletModal();
+                await loadData();
+                alert('Wallet created successfully!');
+
+            } catch (err) {
+                alert('Error creating wallet: ' + err.message);
+            }
+        }
+
+        function openExportModal() {
+            document.getElementById('exportModal').classList.add('active');
+        }
+
+        function exportData(type) {
+            const dataToExport = filteredTransactions.length > 0 ? filteredTransactions : allTransactions;
+
+            if (type === 'csv') {
+                exportToCSV(dataToExport);
+            } else if (type === 'pdf') {
+                exportToPDF(dataToExport);
+            }
+            document.getElementById('exportModal').classList.remove('active');
+        }
+
+        function exportToCSV(data) {
+            if (!data.length) {
+                alert('No data to export');
+                return;
+            }
+            let csv = 'Date,Category,Wallet,Type,Amount,Notes\n';
+            data.forEach(t => {
+                const cat = t.categories?.name || categoryMap[t.category_id] || '';
+                const wal = t.wallets?.name || walletMap[t.wallet_id] || '';
+                csv += `${t.transaction_date},${cat},${wal},${t.type},${t.amount},"${t.notes || ''}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `nexgen-transactions-${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+        }
+
+        function exportToPDF(data) {
+            if (!data.length) {
+                alert('No data to export');
+                return;
+            }
+            const element = document.createElement('div');
+            element.innerHTML = `
+                <h2 style="text-align:center; margin-bottom:20px; font-family: system-ui;">NexGen Financial Report</h2>
+                <table border="1" style="width:100%; border-collapse: collapse; font-size:11px; font-family: system-ui;">
+                    <thead><tr style="background:#f1f5f9;">
+                        <th style="padding:6px;">Date</th>
+                        <th style="padding:6px;">Category</th>
+                        <th style="padding:6px;">Wallet</th>
+                        <th style="padding:6px;">Type</th>
+                        <th style="padding:6px; text-align:right;">Amount</th>
+                    </tr></thead>
+                    <tbody>
+                        ${data.map(t => {
+                            const cat = t.categories?.name || categoryMap[t.category_id] || '';
+                            const wal = t.wallets?.name || walletMap[t.wallet_id] || '';
+                            return `<tr>
+                                <td style="padding:5px;">${t.transaction_date}</td>
+                                <td style="padding:5px;">${cat}</td>
+                                <td style="padding:5px;">${wal}</td>
+                                <td style="padding:5px;">${t.type}</td>
+                                <td style="padding:5px; text-align:right;">${formatRp(t.amount)}</td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+            html2pdf().from(element).set({
+                margin: 15,
+                filename: `nexgen-report-${new Date().toISOString().slice(0,10)}.pdf`
+            }).save();
+        }
 
         async function initializeApp() {
             await loadData();
