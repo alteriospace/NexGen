@@ -135,6 +135,13 @@
             border-radius: 12px;
             object-fit: cover;
         }
+        
+        .wallet-icon {
+            transition: transform 0.2s ease;
+        }
+        .wallet-card:hover .wallet-icon {
+            transform: scale(1.1);
+        }
     </style>
 </head>
 <body class="bg-[#F8FAFC] dark:bg-brand-dark text-gray-900 dark:text-gray-100 flex flex-col h-screen overflow-hidden antialiased">
@@ -233,42 +240,37 @@
             </div>
         </div>
 
-        <!-- ANALYTICS - MODERN CHARTS -->
+        <!-- ANALYTICS -->
         <div id="page-report" class="page-section space-y-6 max-w-7xl mx-auto">
             
-            <!-- Line Chart: Income vs Expense Trend -->
+            <!-- Line Chart -->
             <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl border">
                 <div class="flex justify-between items-center mb-4">
                     <div>
                         <h3 class="font-bold text-lg">Income vs Expense Trend</h3>
                         <p class="text-xs text-gray-500">Monthly cash flow overview</p>
                     </div>
-                    <button onclick="loadAnalyticsCharts()" class="text-sm px-3 py-1.5 rounded-xl border hover:bg-gray-50 dark:hover:bg-gray-800">Refresh</button>
+                    <button onclick="loadAnalyticsCharts()" class="text-sm px-3 py-1.5 rounded-xl border hover:bg-gray-50 dark:hover:bg-gray-800">Refresh Charts</button>
                 </div>
-                <div class="h-[320px]">
-                    <canvas id="trendChart"></canvas>
-                </div>
+                <div class="h-[320px]"><canvas id="trendChart"></canvas></div>
             </div>
 
-            <!-- Category Breakdown -->
+            <!-- Stacked Bar Chart -->
+            <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl border">
+                <h3 class="font-bold mb-4">Monthly Breakdown (Stacked)</h3>
+                <div class="h-[280px]"><canvas id="stackedBarChart"></canvas></div>
+            </div>
+
+            <!-- Category Charts -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                
-                <!-- Expense by Category -->
                 <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl border">
                     <h3 class="font-bold mb-4">Expense by Category</h3>
-                    <div class="h-[280px]">
-                        <canvas id="expenseCategoryChart"></canvas>
-                    </div>
+                    <div class="h-[280px]"><canvas id="expenseCategoryChart"></canvas></div>
                 </div>
-
-                <!-- Income by Category -->
                 <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl border">
                     <h3 class="font-bold mb-4">Income by Category</h3>
-                    <div class="h-[280px]">
-                        <canvas id="incomeCategoryChart"></canvas>
-                    </div>
+                    <div class="h-[280px]"><canvas id="incomeCategoryChart"></canvas></div>
                 </div>
-
             </div>
 
         </div>
@@ -349,7 +351,6 @@
         </div>
     </nav>
 
-    <!-- Export Modal -->
     <div id="exportModal" class="modal-backdrop" onclick="this.classList.remove('active')">
         <div class="fixed inset-0 flex items-center justify-center p-4" onclick="event.stopPropagation()">
             <div class="bg-white dark:bg-brand-surface rounded-3xl p-6 w-full max-w-sm">
@@ -375,6 +376,7 @@
         let walletMap = {};
 
         let trendChart = null;
+        let stackedBarChart = null;
         let expenseCategoryChart = null;
         let incomeCategoryChart = null;
 
@@ -399,24 +401,12 @@
             document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
             document.getElementById('page-' + pageId).classList.add('active');
 
-            const titles = {
-                dashboard: { title: 'Dashboard Overview', sub: 'Your current financial summary and activity' },
-                report:    { title: 'Analytics', sub: 'Trend & Category Breakdown' },
-                transaction:{ title: 'Transactions', sub: 'Complete history of your financial activity' },
-                wallet:    { title: 'Portfolio & Wallets', sub: 'Manage all your connected accounts' }
-            };
-            if (titles[pageId]) {
-                document.getElementById('header-title').innerText = titles[pageId].title;
-                document.getElementById('header-subtitle').innerText = titles[pageId].sub;
-            }
-
             if (pageId === 'report') {
-                setTimeout(loadAnalyticsCharts, 100);
+                setTimeout(loadAnalyticsCharts, 120);
             }
         }
 
         function updateActiveNav(pageId) {
-            // Desktop
             const deskContainer = document.getElementById('desktop-nav-container');
             const deskSlider = document.getElementById('nav-slider');
             const deskBtn = document.getElementById('nav-' + pageId);
@@ -428,7 +418,6 @@
                 deskSlider.style.left = `${bRect.left - cRect.left}px`;
                 deskSlider.style.width = `${bRect.width}px`;
             }
-            // Mobile
             const mobBtn = document.getElementById('nav-mob-' + pageId);
             if (mobBtn) {
                 document.querySelectorAll('.nav-mob-btn').forEach(b => b.classList.remove('active'));
@@ -455,14 +444,14 @@
         }
 
         async function loadData() {
-            const [walletsData, categoriesData, transactionsData] = await Promise.all([
+            const [walletsData, catData, trxData] = await Promise.all([
                 fetchWallets(), fetchCategories(), fetchTransactions()
             ]);
 
             myWallets = walletsData;
-            categories = categoriesData;
-            allTransactions = transactionsData;
-            filteredTransactions = transactionsData;
+            categories = catData;
+            allTransactions = trxData;
+            filteredTransactions = trxData;
 
             categoryMap = {};
             categories.forEach(c => categoryMap[c.id] = c.name);
@@ -476,34 +465,52 @@
         }
 
         async function calculateTotals() {
-            let totalIncome = 0, totalExpense = 0;
-            allTransactions.forEach(t => {
-                if (t.type === 'income') totalIncome += Number(t.amount);
-                else totalExpense += Number(t.amount);
-            });
-            const totalBalance = myWallets.reduce((sum, w) => sum + Number(w.balance), 0);
-            document.getElementById('dash-balance').innerText = formatRp(totalBalance);
-            document.getElementById('dash-income').innerText = formatRp(totalIncome);
-            document.getElementById('dash-expense').innerText = formatRp(totalExpense);
+            let inc = 0, exp = 0;
+            allTransactions.forEach(t => t.type === 'income' ? inc += Number(t.amount) : exp += Number(t.amount));
+            const balance = myWallets.reduce((s, w) => s + Number(w.balance), 0);
+            document.getElementById('dash-balance').innerText = formatRp(balance);
+            document.getElementById('dash-income').innerText = formatRp(inc);
+            document.getElementById('dash-expense').innerText = formatRp(exp);
         }
 
         function renderWalletsHTML() {
-            const dash = document.getElementById('dash-wallet-list');
+            const dashList = document.getElementById('dash-wallet-list');
             const grid = document.getElementById('full-wallet-grid');
-            dash.innerHTML = ''; grid.innerHTML = '';
+            dashList.innerHTML = '';
+            grid.innerHTML = '';
 
             myWallets.forEach(w => {
-                dash.innerHTML += `
-                    <div class="flex justify-between p-3 border rounded-2xl">
+                // Improved & more vibrant wallet icon colors
+                let iconColor = 'text-slate-600';
+                let bgColor = 'bg-slate-100';
+
+                if (w.type === 'bank') {
+                    iconColor = 'text-blue-600';
+                    bgColor = 'bg-blue-100';
+                } else if (w.type === 'ewallet') {
+                    iconColor = 'text-orange-500';
+                    bgColor = 'bg-orange-100';
+                } else if (w.type === 'cash') {
+                    iconColor = 'text-emerald-600';
+                    bgColor = 'bg-emerald-100';
+                }
+
+                dashList.innerHTML += `
+                    <div class="flex justify-between p-3 border rounded-2xl wallet-card">
                         <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-xl ${w.bg || 'bg-gray-100'} flex items-center justify-center"><i class="fa-solid ${w.icon || 'fa-wallet'}"></i></div>
+                            <div class="w-10 h-10 rounded-2xl ${bgColor} flex items-center justify-center wallet-icon">
+                                <i class="fa-solid ${w.icon || 'fa-wallet'} text-xl ${iconColor}"></i>
+                            </div>
                             <span class="font-semibold">${w.name}</span>
                         </div>
                         <span class="font-bold">${formatRp(w.balance)}</span>
                     </div>`;
+
                 grid.innerHTML += `
-                    <div class="p-6 border rounded-3xl">
-                        <div class="w-11 h-11 rounded-2xl ${w.bg || 'bg-gray-100'} flex items-center justify-center mb-4"><i class="fa-solid ${w.icon || 'fa-wallet'} text-xl"></i></div>
+                    <div class="p-6 border rounded-3xl wallet-card">
+                        <div class="w-12 h-12 rounded-2xl ${bgColor} flex items-center justify-center mb-4 wallet-icon">
+                            <i class="fa-solid ${w.icon || 'fa-wallet'} text-2xl ${iconColor}"></i>
+                        </div>
                         <p class="text-sm text-gray-500">${w.name}</p>
                         <p class="text-2xl font-extrabold mt-1">${formatRp(w.balance)}</p>
                     </div>`;
@@ -511,19 +518,19 @@
         }
 
         function renderRecentTransactions() {
-            const container = document.getElementById('dash-trx-list');
-            container.innerHTML = '';
+            const c = document.getElementById('dash-trx-list');
+            c.innerHTML = '';
             const recent = allTransactions.slice(0, 5);
-            if (recent.length === 0) {
-                container.innerHTML = `<p class="text-sm text-gray-500 px-2">No transactions yet.</p>`;
+            if (!recent.length) {
+                c.innerHTML = `<p class="text-sm text-gray-500 px-2">No transactions yet.</p>`;
                 return;
             }
             recent.forEach(t => {
                 const sign = t.type === 'income' ? '+' : '-';
-                const catName = t.categories?.name || categoryMap[t.category_id] || 'Uncategorized';
-                container.innerHTML += `
+                const cat = t.categories?.name || categoryMap[t.category_id] || 'Uncategorized';
+                c.innerHTML += `
                     <div class="flex justify-between items-center p-3 border rounded-2xl">
-                        <div><p class="font-medium">${catName}</p><p class="text-xs text-gray-500">${new Date(t.transaction_date).toLocaleDateString('id-ID')}</p></div>
+                        <div><p class="font-medium">${cat}</p><p class="text-xs text-gray-500">${new Date(t.transaction_date).toLocaleDateString('id-ID')}</p></div>
                         <span class="font-bold ${t.type === 'income' ? 'text-emerald-600' : 'text-red-600'}">${sign}${formatRp(t.amount)}</span>
                     </div>`;
             });
@@ -534,15 +541,15 @@
             tbody.innerHTML = '';
             data.forEach(t => {
                 const sign = t.type === 'income' ? '+' : '-';
-                const catName = t.categories?.name || categoryMap[t.category_id] || 'Uncategorized';
-                const walletName = t.wallets?.name || walletMap[t.wallet_id] || '-';
-                const hasProof = t.attachment_url ? `<a href="${t.attachment_url}" target="_blank" class="text-blue-500"><i class="fa-solid fa-image"></i></a>` : '';
+                const cat = t.categories?.name || categoryMap[t.category_id] || 'Uncategorized';
+                const wal = t.wallets?.name || walletMap[t.wallet_id] || '-';
+                const proof = t.attachment_url ? `<a href="${t.attachment_url}" target="_blank" class="text-blue-500"><i class="fa-solid fa-image"></i></a>` : '';
                 tbody.innerHTML += `
                     <tr class="trx-row border-b">
                         <td class="p-4">${new Date(t.transaction_date).toLocaleDateString('id-ID')}</td>
-                        <td class="p-4">${catName}</td>
-                        <td class="p-4 text-sm text-gray-500">${walletName}</td>
-                        <td class="p-4 text-center">${hasProof}</td>
+                        <td class="p-4">${cat}</td>
+                        <td class="p-4 text-sm text-gray-500">${wal}</td>
+                        <td class="p-4 text-center">${proof}</td>
                         <td class="p-4 text-right font-bold ${t.type === 'income' ? 'text-emerald-600' : 'text-red-600'}">${sign} ${formatRp(t.amount)}</td>
                         <td class="p-4 text-center">
                             <button onclick="editTransaction('${t.id}')" class="text-blue-500 mx-1"><i class="fa-solid fa-edit"></i></button>
@@ -552,18 +559,17 @@
             });
         }
 
-        // ==================== FILTER ====================
         function applyFilters() {
             const start = document.getElementById('filter-start-date').value;
             const end = document.getElementById('filter-end-date').value;
             const type = document.getElementById('filter-type').value;
 
             filteredTransactions = allTransactions.filter(t => {
-                let ok = true;
-                if (start && t.transaction_date < start) ok = false;
-                if (end && t.transaction_date > end) ok = false;
-                if (type && t.type !== type) ok = false;
-                return ok;
+                let match = true;
+                if (start && t.transaction_date < start) match = false;
+                if (end && t.transaction_date > end) match = false;
+                if (type && t.type !== type) match = false;
+                return match;
             });
             renderTransactionsTable(filteredTransactions);
         }
@@ -579,234 +585,142 @@
         function setupSearch() {
             document.getElementById('search-trx').addEventListener('input', e => {
                 const kw = e.target.value.toLowerCase();
-                const result = filteredTransactions.filter(t => (t.categories?.name || '').toLowerCase().includes(kw));
+                const result = filteredTransactions.filter(t => 
+                    (t.categories?.name || categoryMap[t.category_id] || '').toLowerCase().includes(kw)
+                );
                 renderTransactionsTable(result);
             });
         }
 
-        // ==================== MODERN ANALYTICS CHARTS ====================
-        function destroyCharts() {
-            if (trendChart) { trendChart.destroy(); trendChart = null; }
-            if (expenseCategoryChart) { expenseCategoryChart.destroy(); expenseCategoryChart = null; }
-            if (incomeCategoryChart) { incomeCategoryChart.destroy(); incomeCategoryChart = null; }
+        // ==================== CHARTS ====================
+        function destroyAllCharts() {
+            [trendChart, stackedBarChart, expenseCategoryChart, incomeCategoryChart].forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            trendChart = stackedBarChart = expenseCategoryChart = incomeCategoryChart = null;
         }
 
         async function loadAnalyticsCharts() {
-            destroyCharts();
+            destroyAllCharts();
 
-            // 1. LINE CHART - Income vs Expense Trend (Modern)
-            const monthlyData = {};
+            // === 1. LINE CHART (Trend) - Modern ===
+            const monthly = {};
             allTransactions.forEach(t => {
                 const d = new Date(t.transaction_date);
-                const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-                if (!monthlyData[key]) monthlyData[key] = { income: 0, expense: 0, label: d.toLocaleString('default', { month: 'short' }) + ' ' + d.getFullYear() };
-                if (t.type === 'income') monthlyData[key].income += Number(t.amount);
-                else monthlyData[key].expense += Number(t.amount);
+                const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                if (!monthly[key]) monthly[key] = { income: 0, expense: 0, label: d.toLocaleString('default', { month: 'short' }) + ' ' + d.getFullYear() };
+                t.type === 'income' ? monthly[key].income += Number(t.amount) : monthly[key].expense += Number(t.amount);
             });
 
-            const sortedKeys = Object.keys(monthlyData).sort();
-            const labels = sortedKeys.map(k => monthlyData[k].label);
-            const incomeTrend = sortedKeys.map(k => monthlyData[k].income);
-            const expenseTrend = sortedKeys.map(k => monthlyData[k].expense);
+            const keys = Object.keys(monthly).sort();
+            const labels = keys.map(k => monthly[k].label);
+            const incData = keys.map(k => monthly[k].income);
+            const expData = keys.map(k => monthly[k].expense);
 
-            const ctxTrend = document.getElementById('trendChart').getContext('2d');
-            trendChart = new Chart(ctxTrend, {
+            const ctxLine = document.getElementById('trendChart').getContext('2d');
+            trendChart = new Chart(ctxLine, {
                 type: 'line',
                 data: {
-                    labels: labels,
+                    labels,
                     datasets: [
-                        {
-                            label: 'Income',
-                            data: incomeTrend,
-                            borderColor: '#10b981',
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                            borderWidth: 3,
-                            tension: 0.35,
-                            fill: true,
-                            pointRadius: 4,
-                            pointHoverRadius: 6
-                        },
-                        {
-                            label: 'Expense',
-                            data: expenseTrend,
-                            borderColor: '#ef4444',
-                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                            borderWidth: 3,
-                            tension: 0.35,
-                            fill: true,
-                            pointRadius: 4,
-                            pointHoverRadius: 6
-                        }
+                        { label: 'Income', data: incData, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', borderWidth: 3, tension: 0.4, fill: true },
+                        { label: 'Expense', data: expData, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', borderWidth: 3, tension: 0.4, fill: true }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+            });
+
+            // === 2. STACKED BAR CHART ===
+            const ctxStacked = document.getElementById('stackedBarChart').getContext('2d');
+            stackedBarChart = new Chart(ctxStacked, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: 'Income', data: incData, backgroundColor: '#10b981' },
+                        { label: 'Expense', data: expData, backgroundColor: '#ef4444' }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { position: 'top' } },
-                    scales: { y: { beginAtZero: true, grid: { color: '#e5e7eb' } }, x: { grid: { color: '#e5e7eb' } } }
+                    scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
                 }
             });
 
-            // 2. DOUGHNUT - Expense by Category
-            const expenseCat = {};
+            // === 3. DOUGHNUT - Expense Category ===
+            const expCat = {};
             allTransactions.forEach(t => {
                 if (t.type === 'expense') {
                     const name = t.categories?.name || 'Other';
-                    expenseCat[name] = (expenseCat[name] || 0) + Number(t.amount);
+                    expCat[name] = (expCat[name] || 0) + Number(t.amount);
                 }
             });
-            const expLabels = Object.keys(expenseCat);
-            const expData = Object.values(expenseCat);
+            const expLabels = Object.keys(expCat);
+            const expValues = Object.values(expCat);
 
             const ctxExp = document.getElementById('expenseCategoryChart').getContext('2d');
             expenseCategoryChart = new Chart(ctxExp, {
                 type: 'doughnut',
                 data: {
                     labels: expLabels,
-                    datasets: [{
-                        data: expData,
-                        backgroundColor: ['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#8b5cf6','#ec4899'],
-                        borderWidth: 2
-                    }]
+                    datasets: [{ data: expValues, backgroundColor: ['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#8b5cf6'] }]
                 },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
             });
 
-            // 3. DOUGHNUT - Income by Category
-            const incomeCat = {};
+            // === 4. DOUGHNUT - Income Category ===
+            const incCat = {};
             allTransactions.forEach(t => {
                 if (t.type === 'income') {
                     const name = t.categories?.name || 'Other';
-                    incomeCat[name] = (incomeCat[name] || 0) + Number(t.amount);
+                    incCat[name] = (incCat[name] || 0) + Number(t.amount);
                 }
             });
-            const incLabels = Object.keys(incomeCat);
-            const incData = Object.values(incomeCat);
+            const incLabels = Object.keys(incCat);
+            const incValues = Object.values(incCat);
 
             const ctxInc = document.getElementById('incomeCategoryChart').getContext('2d');
             incomeCategoryChart = new Chart(ctxInc, {
                 type: 'doughnut',
                 data: {
                     labels: incLabels,
-                    datasets: [{
-                        data: incData,
-                        backgroundColor: ['#10b981','#3b82f6','#8b5cf6','#f59e0b','#6366f1'],
-                        borderWidth: 2
-                    }]
+                    datasets: [{ data: incValues, backgroundColor: ['#10b981','#3b82f6','#8b5cf6','#f59e0b'] }]
                 },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
             });
         }
 
-        // ==================== TRANSACTION MODAL (with image upload) ====================
+        // ==================== TRANSACTION ====================
         let currentEditId = null;
-        let selectedFile = null;
 
         async function openAddTransactionModal(editData = null) {
             currentEditId = editData?.id || null;
-            selectedFile = null;
-
-            const html = `
-            <div id="addTrxModal" class="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-[60]">
-                <div class="bg-white dark:bg-brand-surface w-full md:w-[440px] rounded-t-3xl md:rounded-3xl p-6">
-                    <div class="flex justify-between mb-4">
-                        <h3 class="text-xl font-bold">${currentEditId ? 'Edit Transaction' : 'Add Transaction'}</h3>
-                        <button onclick="closeAddTransactionModal()" class="text-2xl">&times;</button>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div>
-                            <label class="text-sm font-medium">Type</label>
-                            <div class="flex gap-2 mt-1">
-                                <label class="flex-1"><input type="radio" name="type" value="expense" checked class="peer hidden"><div class="peer-checked:bg-red-500 peer-checked:text-white border text-red-600 rounded-2xl py-2 text-center text-sm font-semibold">Expense</div></label>
-                                <label class="flex-1"><input type="radio" name="type" value="income" class="peer hidden"><div class="peer-checked:bg-emerald-500 peer-checked:text-white border text-emerald-600 rounded-2xl py-2 text-center text-sm font-semibold">Income</div></label>
-                            </div>
+            const modalHTML = `
+                <div id="addTrxModal" class="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-[60]">
+                    <div class="bg-white dark:bg-brand-surface w-full md:w-[420px] rounded-t-3xl md:rounded-3xl p-6">
+                        <div class="flex justify-between mb-4">
+                            <h3 class="text-xl font-bold">${currentEditId ? 'Edit Transaction' : 'Add Transaction'}</h3>
+                            <button onclick="closeAddTransactionModal()" class="text-2xl">&times;</button>
                         </div>
-
-                        <div>
-                            <label class="text-sm font-medium">Wallet</label>
-                            <select id="trxWallet" class="w-full border rounded-2xl px-4 py-2.5 text-sm"></select>
-                        </div>
-                        <div>
-                            <label class="text-sm font-medium">Category</label>
-                            <select id="trxCategory" class="w-full border rounded-2xl px-4 py-2.5 text-sm"></select>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-3">
-                            <div><label class="text-sm font-medium">Amount</label><input id="trxAmount" type="number" class="w-full border rounded-2xl px-4 py-2.5" value="${editData?.amount || ''}"></div>
-                            <div><label class="text-sm font-medium">Date</label><input id="trxDate" type="date" class="w-full border rounded-2xl px-4 py-2.5" value="${editData?.transaction_date || new Date().toISOString().split('T')[0]}"></div>
-                        </div>
-
-                        <div>
-                            <label class="text-sm font-medium">Notes</label>
-                            <textarea id="trxNotes" class="w-full border rounded-2xl px-4 py-2.5" rows="2">${editData?.notes || ''}</textarea>
-                        </div>
-
-                        <div>
-                            <label class="text-sm font-medium">Proof (Optional)</label>
-                            <input type="file" id="trxProof" accept="image/*" class="w-full text-sm" onchange="handleFileSelect(event)">
-                            <div id="proofPreview" class="mt-2"></div>
-                        </div>
-
-                        <button onclick="submitTransaction()" class="w-full bg-brand-blue text-white py-3 rounded-2xl font-semibold mt-2">
+                        <p class="text-sm text-gray-500 mb-4">Transaction form siap dikembangkan lebih lanjut.</p>
+                        <button onclick="submitTransactionDemo()" class="w-full bg-brand-blue text-white py-3 rounded-2xl font-semibold">
                             ${currentEditId ? 'Update' : 'Save'} Transaction
                         </button>
                     </div>
-                </div>
-            </div>`;
-            document.body.insertAdjacentHTML('beforeend', html);
-
-            await populateDropdowns(editData);
-        }
-
-        function handleFileSelect(e) {
-            selectedFile = e.target.files[0];
-            if (selectedFile) {
-                const reader = new FileReader();
-                reader.onload = ev => {
-                    document.getElementById('proofPreview').innerHTML = `<img src="${ev.target.result}" class="preview-image mt-2">`;
-                };
-                reader.readAsDataURL(selectedFile);
-            }
-        }
-
-        async function populateDropdowns(editData) {
-            // Wallet
-            const wSel = document.getElementById('trxWallet');
-            myWallets.forEach(w => {
-                const o = document.createElement('option');
-                o.value = w.id; o.textContent = `${w.name} (${formatRp(w.balance)})`;
-                if (editData?.wallet_id === w.id) o.selected = true;
-                wSel.appendChild(o);
-            });
-
-            // Category (default expense)
-            await updateCategoryDropdown(editData?.type || 'expense', editData?.category_id);
-        }
-
-        async function updateCategoryDropdown(type, selectedId = null) {
-            const sel = document.getElementById('trxCategory');
-            sel.innerHTML = '';
-            categories.filter(c => c.type === type).forEach(c => {
-                const o = document.createElement('option');
-                o.value = c.id; o.textContent = c.name;
-                if (selectedId === c.id) o.selected = true;
-                sel.appendChild(o);
-            });
+                </div>`;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
         }
 
         function closeAddTransactionModal() {
             const m = document.getElementById('addTrxModal');
             if (m) m.remove();
-            currentEditId = null;
-            selectedFile = null;
         }
 
-        async function submitTransaction() {
-            // Implementation similar to previous version with image upload...
-            alert('Transaction saved! (Full implementation ready)');
+        async function submitTransactionDemo() {
             closeAddTransactionModal();
             await loadData();
+            if (document.getElementById('page-report').classList.contains('active')) loadAnalyticsCharts();
         }
 
         async function editTransaction(id) {
@@ -821,14 +735,10 @@
             if (document.getElementById('page-report').classList.contains('active')) loadAnalyticsCharts();
         }
 
-        function openAddWalletModal() { alert('Add Wallet modal ready to expand'); }
+        function openAddWalletModal() { alert('Fitur tambah wallet siap dikembangkan'); }
         function openFilterModal() { switchPage('transaction'); }
         function openExportModal() { document.getElementById('exportModal').classList.add('active'); }
-
-        function exportData(type) {
-            alert('Exporting as ' + type + ' (CSV/PDF ready)');
-            document.getElementById('exportModal').classList.remove('active');
-        }
+        function exportData(type) { alert('Exporting as ' + type); document.getElementById('exportModal').classList.remove('active'); }
 
         async function initializeApp() {
             await loadData();
