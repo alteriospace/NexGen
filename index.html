@@ -79,15 +79,15 @@
 
         .mobile-nav {
             position: relative;
-            background-color: rgba(255,255,255,0.96);
-            border: 1px solid #e5e7eb;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            background-color: rgba(255,255,255,0.98);
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             padding: 4px;
         }
         .dark .mobile-nav {
-            background-color: rgba(23, 30, 46, 0.96);
-            border-color: #334155;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            background-color: rgba(30, 41, 59, 0.98);
+            border-color: #475569;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
         }
 
         .nav-mob-btn {
@@ -144,10 +144,10 @@
         }
     </style>
 </head>
-<body class="bg-[#F8FAFC] dark:bg-brand-dark text-gray-900 dark:text-gray-100 flex flex-col h-screen overflow-hidden antialiased">
+<body class="bg-slate-100 dark:bg-slate-950 text-gray-900 dark:text-slate-100 flex flex-col h-screen overflow-hidden antialiased">
 
     <!-- HEADER -->
-    <header class="h-20 bg-white dark:bg-brand-surface px-6 md:px-10 flex justify-between items-center z-30 border-b border-gray-100 dark:border-gray-800 shrink-0">
+    <header class="h-20 bg-white dark:bg-slate-900 px-6 md:px-10 flex justify-between items-center z-30 border-b border-gray-200 dark:border-slate-800 shrink-0">
         <div class="flex items-center gap-3">
             <div class="w-9 h-9 bg-brand-blue rounded-2xl flex items-center justify-center text-white text-xl shadow-sm"><i class="fa-solid fa-bolt"></i></div>
             <h1 class="text-2xl font-extrabold tracking-tighter">NexGen</h1>
@@ -199,10 +199,6 @@
                     <i class="fa-solid fa-download md:hidden"></i>
                     <span class="hidden md:inline">Export</span>
                 </button>
-                <button onclick="openFilterModal()" class="px-3 py-1.5 md:px-4 md:py-2 rounded-2xl bg-brand-blue text-white text-xs md:text-sm font-semibold flex items-center gap-2">
-                    <i class="fa-solid fa-filter md:hidden"></i>
-                    <span class="hidden md:inline">Filter</span>
-                </button>
             </div>
         </div>
 
@@ -218,22 +214,22 @@
                         <div class="w-11 h-11 bg-white/20 rounded-2xl flex items-center justify-center"><i class="fa-solid fa-wallet"></i></div>
                     </div>
                 </div>
-                <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl border">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl">
                     <p class="text-sm text-gray-500">TOTAL INCOME</p>
                     <h3 class="text-3xl font-extrabold mt-1" id="dash-income">Rp 0</h3>
                 </div>
-                <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl border">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl">
                     <p class="text-sm text-gray-500">TOTAL EXPENSE</p>
                     <h3 class="text-3xl font-extrabold mt-1" id="dash-expense">Rp 0</h3>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl border">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl">
                     <h3 class="font-bold mb-4">My Wallets</h3>
                     <div id="dash-wallet-list" class="space-y-3"></div>
                 </div>
-                <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl border">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl">
                     <h3 class="font-bold mb-4">Recent Transactions</h3>
                     <div id="dash-trx-list" class="space-y-3"></div>
                 </div>
@@ -244,7 +240,7 @@
         <div id="page-report" class="page-section space-y-6 max-w-7xl mx-auto">
             
             <!-- Line Chart -->
-            <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl border">
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl">
                 <div class="flex justify-between items-center mb-4">
                     <div>
                         <h3 class="font-bold text-lg">Income vs Expense Trend</h3>
@@ -256,18 +252,18 @@
             </div>
 
             <!-- Stacked Bar Chart -->
-            <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl border">
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl">
                 <h3 class="font-bold mb-4">Monthly Breakdown (Stacked)</h3>
                 <div class="h-[280px]"><canvas id="stackedBarChart"></canvas></div>
             </div>
 
             <!-- Category Charts -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl border">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl">
                     <h3 class="font-bold mb-4">Expense by Category</h3>
                     <div class="h-[280px]"><canvas id="expenseCategoryChart"></canvas></div>
                 </div>
-                <div class="bg-white dark:bg-brand-surface p-6 rounded-3xl border">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl">
                     <h3 class="font-bold mb-4">Income by Category</h3>
                     <div class="h-[280px]"><canvas id="incomeCategoryChart"></canvas></div>
                 </div>
@@ -277,41 +273,47 @@
 
         <!-- TRANSACTIONS -->
         <div id="page-transaction" class="page-section max-w-7xl mx-auto">
-            <div class="bg-white dark:bg-brand-surface rounded-3xl border p-4 mb-4">
+            <div class="bg-white dark:bg-slate-900 rounded-3xl p-4 mb-4">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <div>
-                        <label class="text-xs text-gray-500 block mb-1">Start Date</label>
-                        <input type="date" id="filter-start-date" class="w-full border rounded-2xl px-3 py-2 text-sm">
+                        <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1">Start Date</label>
+                        <input type="date" id="filter-start-date" class="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-2xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-blue">
                     </div>
                     <div>
-                        <label class="text-xs text-gray-500 block mb-1">End Date</label>
-                        <input type="date" id="filter-end-date" class="w-full border rounded-2xl px-3 py-2 text-sm">
+                        <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1">End Date</label>
+                        <input type="date" id="filter-end-date" class="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-2xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-blue">
                     </div>
                     <div>
                         <label class="text-xs text-gray-500 block mb-1">Type</label>
-                        <select id="filter-type" class="w-full border rounded-2xl px-3 py-2 text-sm" onchange="applyFilters()">
+                        <select id="filter-type" class="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-2xl px-3 py-2 text-sm" onchange="applyFilters()">
                             <option value="">All</option>
                             <option value="income">Income</option>
                             <option value="expense">Expense</option>
                         </select>
                     </div>
                     <div class="flex items-end gap-2">
-                        <button onclick="applyFilters()" class="flex-1 bg-gray-900 text-white px-4 py-2 rounded-2xl text-sm font-medium">Apply</button>
-                        <button onclick="resetFilters()" class="px-4 py-2 border rounded-2xl text-sm">Reset</button>
+                        <button onclick="applyFilters()" 
+                                class="flex-1 bg-slate-900 hover:bg-black text-white px-4 py-2.5 rounded-2xl text-sm font-medium transition-colors">
+                            Apply Filter
+                        </button>
+                        <button onclick="resetFilters()" 
+                                class="px-4 py-2.5 border border-gray-300 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-2xl text-sm transition-colors">
+                            Reset
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-brand-surface rounded-3xl border overflow-hidden">
+            <div class="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden">
                 <div class="p-5 flex flex-col md:flex-row gap-3 md:items-center border-b">
-                    <input type="text" id="search-trx" placeholder="Search category..." class="flex-1 bg-gray-50 dark:bg-gray-800 border rounded-2xl px-4 py-2 text-sm">
+                    <input type="text" id="search-trx" placeholder="Search category..." class="flex-1 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-2xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue">
                     <button onclick="openAddTransactionModal()" class="bg-brand-blue hover:bg-blue-700 text-white px-5 py-2.5 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2">
                         <i class="fa-solid fa-plus"></i>
                         <span>Add Transaction</span>
                     </button>
                 </div>
                 <table class="w-full">
-                    <thead class="bg-gray-50 dark:bg-gray-800/50 text-xs">
+                    <thead class="bg-gray-100 dark:bg-slate-800 text-xs">
                         <tr>
                             <th class="p-4 text-left">Date</th>
                             <th class="p-4 text-left">Category</th>
@@ -418,10 +420,19 @@
                 deskSlider.style.left = `${bRect.left - cRect.left}px`;
                 deskSlider.style.width = `${bRect.width}px`;
             }
+            // Mobile nav slider
+            const mobContainer = document.getElementById('mobile-nav-container');
+            const mobSlider = document.getElementById('mobile-slider');
             const mobBtn = document.getElementById('nav-mob-' + pageId);
-            if (mobBtn) {
+
+            if (mobContainer && mobSlider && mobBtn) {
                 document.querySelectorAll('.nav-mob-btn').forEach(b => b.classList.remove('active'));
                 mobBtn.classList.add('active');
+
+                const cRect = mobContainer.getBoundingClientRect();
+                const bRect = mobBtn.getBoundingClientRect();
+
+                mobSlider.style.left = `${bRect.left - cRect.left}px`;
             }
         }
 
@@ -729,10 +740,23 @@
         }
 
         async function deleteTransaction(id) {
-            if (!confirm('Delete this transaction?')) return;
-            await db.from('transactions').delete().eq('id', id);
-            await loadData();
-            if (document.getElementById('page-report').classList.contains('active')) loadAnalyticsCharts();
+            if (!confirm('Hapus transaksi ini?')) return;
+
+            try {
+                const { error } = await db.from('transactions').delete().eq('id', id);
+                if (error) throw error;
+
+                await loadData();
+
+                // Refresh charts if user is on Analytics page
+                const reportPage = document.getElementById('page-report');
+                if (reportPage && reportPage.classList.contains('active')) {
+                    loadAnalyticsCharts();
+                }
+            } catch (err) {
+                console.error('Delete error:', err);
+                alert('Gagal menghapus transaksi: ' + err.message);
+            }
         }
 
         function openAddWalletModal() { alert('Fitur tambah wallet siap dikembangkan'); }
@@ -743,7 +767,23 @@
         async function initializeApp() {
             await loadData();
             setupSearch();
-            document.getElementById('nav-mob-dashboard').classList.add('active');
+
+            // Set initial active state for mobile
+            const initialMobBtn = document.getElementById('nav-mob-dashboard');
+            if (initialMobBtn) initialMobBtn.classList.add('active');
+
+            // Set initial position for mobile slider
+            setTimeout(() => {
+                const mobContainer = document.getElementById('mobile-nav-container');
+                const mobSlider = document.getElementById('mobile-slider');
+                const activeMobBtn = document.querySelector('.nav-mob-btn.active');
+
+                if (mobContainer && mobSlider && activeMobBtn) {
+                    const cRect = mobContainer.getBoundingClientRect();
+                    const bRect = activeMobBtn.getBoundingClientRect();
+                    mobSlider.style.left = `${bRect.left - cRect.left}px`;
+                }
+            }, 100);
         }
 
         window.onload = initializeApp;
