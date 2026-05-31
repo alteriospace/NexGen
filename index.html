@@ -142,8 +142,8 @@
         <!-- DESKTOP NAV -->
         <nav class="hidden md:block">
             <div class="desktop-nav flex items-center relative" id="desktop-nav-container">
-                <!-- Slider dengan fallback width supaya langsung kelihatan -->
-                <div id="nav-slider" class="nav-slider" style="left: 4px; width: 135px;"></div>
+                <!-- Slider dengan ukuran awal yang lebih dekat ke ukuran setelah klik -->
+                <div id="nav-slider" class="nav-slider" style="left: 6px;"></div>
                 
                 <button onclick="switchPage('dashboard')" id="nav-dashboard" class="nav-btn active">
                     <i class="fa-solid fa-border-all w-4"></i>
@@ -371,7 +371,7 @@
             }
         }
 
-        function setSliderExact() {
+        function setSliderExactSize() {
             const container = document.getElementById('desktop-nav-container');
             const slider = document.getElementById('nav-slider');
             const activeBtn = container.querySelector('.nav-btn.active');
@@ -384,6 +384,9 @@
             const btnLeft = activeBtn.getBoundingClientRect().left;
             const btnWidth = activeBtn.getBoundingClientRect().width;
 
+            // Ini akan menampilkan ukuran asli tombol Dashboard di Console (tekan F12)
+            console.log('%c[Slider] Lebar tombol Dashboard:', 'color:#3b82f6', btnWidth + 'px');
+
             slider.style.left = `${btnLeft - containerLeft}px`;
             slider.style.width = `${btnWidth}px`;
 
@@ -395,11 +398,10 @@
         }
 
         function initialize() {
-            // Langsung atur ukuran persis di awal
-            setSliderExact();
+            setSliderExactSize();
 
             requestAnimationFrame(() => {
-                setSliderExact();
+                setSliderExactSize();
             });
 
             initData();
@@ -408,8 +410,8 @@
             document.getElementById('nav-mob-dashboard').classList.add('active');
 
             setTimeout(() => {
-                setSliderExact();
-            }, 100);
+                setSliderExactSize();
+            }, 80);
         }
 
         function renderWalletsHTML() {
@@ -540,7 +542,7 @@
                     slid.style.left = `${bL - cL}px`;
                     slid.style.width = `${bW}px`;
                 }
-            }, 80);
+            }, 60);
         }
 
         function openExportModal() { document.getElementById('exportModal').classList.add('active'); }
