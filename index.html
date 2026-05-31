@@ -704,34 +704,214 @@
 
         // ==================== TRANSACTION ====================
         let currentEditId = null;
+        let selectedProofFile = null;
 
         async function openAddTransactionModal(editData = null) {
             currentEditId = editData?.id || null;
+            selectedProofFile = null;
+
             const modalHTML = `
                 <div id="addTrxModal" class="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-[60]">
-                    <div class="bg-white dark:bg-brand-surface w-full md:w-[420px] rounded-t-3xl md:rounded-3xl p-6">
-                        <div class="flex justify-between mb-4">
+                    <div class="bg-white dark:bg-slate-900 w-full md:w-[440px] rounded-t-3xl md:rounded-3xl p-6 max-h-[92vh] overflow-y-auto">
+                        <div class="flex justify-between items-center mb-5">
                             <h3 class="text-xl font-bold">${currentEditId ? 'Edit Transaction' : 'Add Transaction'}</h3>
-                            <button onclick="closeAddTransactionModal()" class="text-2xl">&times;</button>
+                            <button onclick="closeAddTransactionModal()" class="text-2xl leading-none">&times;</button>
                         </div>
-                        <p class="text-sm text-gray-500 mb-4">Transaction form siap dikembangkan lebih lanjut.</p>
-                        <button onclick="submitTransactionDemo()" class="w-full bg-brand-blue text-white py-3 rounded-2xl font-semibold">
-                            ${currentEditId ? 'Update' : 'Save'} Transaction
-                        </button>
+
+                        <div class="space-y-4">
+                            <!-- Type -->
+                            <div>
+                                <label class="block text-sm font-medium mb-1.5">Type</label>
+                                <div class="flex gap-2">
+                                    <label class="flex-1 cursor-pointer">
+                                        <input type="radio" name="type" value="expense" checked class="peer hidden" onchange="updateCategoryOptions()">
+                                        <div class="peer-checked:bg-red-500 peer-checked:text-white border border-red-200 text-red-600 rounded-2xl py-2 text-center text-sm font-semibold">Expense</div>
+                                    </label>
+                                    <label class="flex-1 cursor-pointer">
+                                        <input type="radio" name="type" value="income" class="peer hidden" onchange="updateCategoryOptions()">
+                                        <div class="peer-checked:bg-emerald-500 peer-checked:text-white border border-emerald-200 text-emerald-600 rounded-2xl py-2 text-center text-sm font-semibold">Income</div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Wallet -->
+                            <div>
+                                <label class="block text-sm font-medium mb-1.5">Wallet</label>
+                                <select id="trxWallet" class="w-full border rounded-2xl px-4 py-2.5 text-sm dark:bg-slate-800" required></select>
+                            </div>
+
+                            <!-- Category -->
+                            <div>
+                                <label class="block text-sm font-medium mb-1.5">Category</label>
+                                <select id="trxCategory" class="w-full border rounded-2xl px-4 py-2.5 text-sm dark:bg-slate-800" required></select>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <!-- Amount -->
+                                <div>
+                                    <label class="block text-sm font-medium mb-1.5">Amount</label>
+                                    <input type="number" id="trxAmount" class="w-full border rounded-2xl px-4 py-2.5 text-sm dark:bg-slate-800" placeholder="0" required>
+                                </div>
+
+                                <!-- Date -->
+                                <div>
+                                    <label class="block text-sm font-medium mb-1.5">Date</label>
+                                    <input type="date" id="trxDate" class="w-full border rounded-2xl px-4 py-2.5 text-sm dark:bg-slate-800" value="${new Date().toISOString().split('T')[0]}" required>
+                                </div>
+                            </div>
+
+                            <!-- Notes -->
+                            <div>
+                                <label class="block text-sm font-medium mb-1.5">Notes (Optional)</label>
+                                <textarea id="trxNotes" class="w-full border rounded-2xl px-4 py-2.5 text-sm dark:bg-slate-800" rows="2" placeholder="Catatan..."></textarea>
+                            </div>
+
+                            <!-- Proof -->
+                            <div>
+                                <label class="block text-sm font-medium mb-1.5">Proof / Receipt (Optional)</label>
+                                <input type="file" id="trxProof" accept="image/*" class="w-full text-sm" onchange="handleProofSelect(event)">
+                                <div id="proofPreview" class="mt-2"></div>
+                            </div>
+
+                            <button onclick="submitTransaction()" 
+                                    class="w-full bg-brand-blue hover:bg-blue-700 text-white py-3 rounded-2xl font-semibold mt-2">
+                                ${currentEditId ? 'Update Transaction' : 'Save Transaction'}
+                            </button>
+                        </div>
                     </div>
                 </div>`;
+
             document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+            // Populate dropdowns
+            await populateWalletDropdown(editData?.wallet_id);
+            const defaultType = editData?.type || 'expense';
+            await populateCategoryDropdown(defaultType, editData?.category_id);
+
+            // Show existing proof if editing
+            if (editData?.attachment_url) {
+                document.getElementById('proofPreview').innerHTML = `
+                    <img src="${editData.attachment_url}" class="max-h-[100px] rounded-xl mt-2 border">
+                `;
+            }
         }
 
         function closeAddTransactionModal() {
-            const m = document.getElementById('addTrxModal');
-            if (m) m.remove();
+            const modal = document.getElementById('addTrxModal');
+            if (modal) modal.remove();
+            currentEditId = null;
+            selectedProofFile = null;
         }
 
-        async function submitTransactionDemo() {
-            closeAddTransactionModal();
-            await loadData();
-            if (document.getElementById('page-report').classList.contains('active')) loadAnalyticsCharts();
+        function handleProofSelect(e) {
+            selectedProofFile = e.target.files[0];
+            if (selectedProofFile) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    document.getElementById('proofPreview').innerHTML = `
+                        <img src="${ev.target.result}" class="max-h-[100px] rounded-xl mt-2 border">
+                    `;
+                };
+                reader.readAsDataURL(selectedProofFile);
+            }
+        }
+
+        async function populateWalletDropdown(selectedId = null) {
+            const select = document.getElementById('trxWallet');
+            if (!select) return;
+            select.innerHTML = '<option value="">-- Pilih Wallet --</option>';
+
+            myWallets.forEach(w => {
+                const option = document.createElement('option');
+                option.value = w.id;
+                option.textContent = `${w.name} (${formatRp(w.balance)})`;
+                if (selectedId && w.id === selectedId) option.selected = true;
+                select.appendChild(option);
+            });
+        }
+
+        async function populateCategoryDropdown(type, selectedId = null) {
+            const select = document.getElementById('trxCategory');
+            if (!select) return;
+            select.innerHTML = '<option value="">-- Pilih Kategori --</option>';
+
+            const filtered = categories.filter(c => c.type === type);
+            filtered.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat.id;
+                option.textContent = cat.name;
+                if (selectedId && cat.id === selectedId) option.selected = true;
+                select.appendChild(option);
+            });
+        }
+
+        function updateCategoryOptions() {
+            const typeRadio = document.querySelector('input[name="type"]:checked');
+            if (typeRadio) {
+                populateCategoryDropdown(typeRadio.value);
+            }
+        }
+
+        async function submitTransaction() {
+            const type = document.querySelector('input[name="type"]:checked').value;
+            const walletId = document.getElementById('trxWallet').value;
+            const categoryId = document.getElementById('trxCategory').value;
+            const amount = parseFloat(document.getElementById('trxAmount').value);
+            const date = document.getElementById('trxDate').value;
+            const notes = document.getElementById('trxNotes').value;
+
+            if (!walletId || !categoryId || !amount) {
+                alert('Harap isi Wallet, Category, dan Amount!');
+                return;
+            }
+
+            try {
+                let attachmentUrl = null;
+
+                // Upload new proof if selected
+                if (selectedProofFile) {
+                    const fileExt = selectedProofFile.name.split('.').pop();
+                    const fileName = `${Date.now()}.${fileExt}`;
+                    const { data: uploadData, error: uploadError } = await db.storage
+                        .from('receipts')
+                        .upload(`receipts/${fileName}`, selectedProofFile);
+
+                    if (uploadError) throw uploadError;
+
+                    const { data: urlData } = db.storage.from('receipts').getPublicUrl(`receipts/${fileName}`);
+                    attachmentUrl = urlData.publicUrl;
+                }
+
+                const payload = {
+                    wallet_id: walletId,
+                    category_id: categoryId,
+                    type: type,
+                    amount: amount,
+                    transaction_date: date,
+                    notes: notes || null
+                };
+
+                if (attachmentUrl) payload.attachment_url = attachmentUrl;
+
+                if (currentEditId) {
+                    const { error } = await db.from('transactions').update(payload).eq('id', currentEditId);
+                    if (error) throw error;
+                } else {
+                    const { error } = await db.from('transactions').insert(payload);
+                    if (error) throw error;
+                }
+
+                closeAddTransactionModal();
+                await loadData();
+                if (document.getElementById('page-report').classList.contains('active')) {
+                    loadAnalyticsCharts();
+                }
+                alert(currentEditId ? 'Transaksi berhasil diupdate!' : 'Transaksi berhasil disimpan!');
+
+            } catch (err) {
+                console.error(err);
+                alert('Gagal menyimpan transaksi: ' + err.message);
+            }
         }
 
         function handleEdit(id) {
