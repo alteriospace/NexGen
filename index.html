@@ -563,8 +563,8 @@
                         <td class="p-4 text-center">${proof}</td>
                         <td class="p-4 text-right font-bold ${t.type === 'income' ? 'text-emerald-600' : 'text-red-600'}">${sign} ${formatRp(t.amount)}</td>
                         <td class="p-4 text-center">
-                            <button onclick="editTransaction('${t.id}')" class="text-blue-500 mx-1"><i class="fa-solid fa-edit"></i></button>
-                            <button onclick="deleteTransaction('${t.id}')" class="text-red-500 mx-1"><i class="fa-solid fa-trash"></i></button>
+                            <button onclick="handleEdit('${t.id}')" class="text-blue-500 mx-1"><i class="fa-solid fa-edit"></i></button>
+                            <button onclick="handleDelete('${t.id}')" class="text-red-500 mx-1"><i class="fa-solid fa-trash"></i></button>
                         </td>
                     </tr>`;
             });
@@ -734,9 +734,17 @@
             if (document.getElementById('page-report').classList.contains('active')) loadAnalyticsCharts();
         }
 
+        function handleEdit(id) {
+            editTransaction(id);
+        }
+
         async function editTransaction(id) {
             const trx = allTransactions.find(t => t.id == id);
             if (trx) await openAddTransactionModal(trx);
+        }
+
+        function handleDelete(id) {
+            deleteTransaction(id);
         }
 
         async function deleteTransaction(id) {
@@ -748,7 +756,6 @@
 
                 await loadData();
 
-                // Refresh charts if user is on Analytics page
                 const reportPage = document.getElementById('page-report');
                 if (reportPage && reportPage.classList.contains('active')) {
                     loadAnalyticsCharts();
