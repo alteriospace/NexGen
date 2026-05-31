@@ -142,8 +142,8 @@
         <!-- DESKTOP NAV -->
         <nav class="hidden md:block">
             <div class="desktop-nav flex items-center relative" id="desktop-nav-container">
-                <!-- Slider dengan ukuran awal yang bagus + JS akan perbaiki -->
-                <div id="nav-slider" class="nav-slider" style="left: 4px; width: 128px;"></div>
+                <!-- Slider dengan fallback width supaya langsung kelihatan -->
+                <div id="nav-slider" class="nav-slider" style="left: 4px; width: 135px;"></div>
                 
                 <button onclick="switchPage('dashboard')" id="nav-dashboard" class="nav-btn active">
                     <i class="fa-solid fa-border-all w-4"></i>
@@ -343,7 +343,6 @@
         }
 
         function updateActiveNav(pageId) {
-            // Desktop
             const deskContainer = document.getElementById('desktop-nav-container');
             const deskSlider = document.getElementById('nav-slider');
             const deskBtn = document.getElementById('nav-' + pageId);
@@ -358,7 +357,6 @@
                 deskSlider.style.width = `${bRect.width}px`;
             }
 
-            // Mobile
             const mobContainer = document.getElementById('mobile-nav-container');
             const mobSlider = document.getElementById('mobile-slider');
             const mobBtn = document.getElementById('nav-mob-' + pageId);
@@ -373,7 +371,7 @@
             }
         }
 
-        function positionSliderNow() {
+        function setSliderExact() {
             const container = document.getElementById('desktop-nav-container');
             const slider = document.getElementById('nav-slider');
             const activeBtn = container.querySelector('.nav-btn.active');
@@ -393,12 +391,16 @@
 
             setTimeout(() => {
                 slider.style.transition = 'all 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
-            }, 15);
+            }, 10);
         }
 
         function initialize() {
-            // Posisikan slider langsung di awal
-            positionSliderNow();
+            // Langsung atur ukuran persis di awal
+            setSliderExact();
+
+            requestAnimationFrame(() => {
+                setSliderExact();
+            });
 
             initData();
             setupSearch();
@@ -406,8 +408,8 @@
             document.getElementById('nav-mob-dashboard').classList.add('active');
 
             setTimeout(() => {
-                positionSliderNow();
-            }, 80);
+                setSliderExact();
+            }, 100);
         }
 
         function renderWalletsHTML() {
@@ -538,7 +540,7 @@
                     slid.style.left = `${bL - cL}px`;
                     slid.style.width = `${bW}px`;
                 }
-            }, 60);
+            }, 80);
         }
 
         function openExportModal() { document.getElementById('exportModal').classList.add('active'); }
