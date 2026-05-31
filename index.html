@@ -274,29 +274,45 @@
         <!-- TRANSACTIONS -->
         <div id="page-transaction" class="page-section max-w-7xl mx-auto">
             <div class="bg-white dark:bg-slate-900 rounded-3xl p-4 mb-4">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <div>
+                <!-- Filter Section - Improved Desktop Layout -->
+                <div class="flex flex-col md:flex-row md:items-end gap-3">
+                    
+                    <!-- Start Date -->
+                    <div class="flex-1 min-w-[140px]">
                         <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1">Start Date</label>
-                        <input type="date" id="filter-start-date" class="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-2xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-blue">
+                        <input type="date" id="filter-start-date" 
+                               class="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-2xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-blue"
+                               onchange="applyFilters()">
                     </div>
-                    <div>
+
+                    <!-- End Date -->
+                    <div class="flex-1 min-w-[140px]">
                         <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1">End Date</label>
-                        <input type="date" id="filter-end-date" class="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-2xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-blue">
+                        <input type="date" id="filter-end-date" 
+                               class="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-2xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-blue"
+                               onchange="applyFilters()">
                     </div>
-                    <div>
+
+                    <!-- Type -->
+                    <div class="w-full md:w-40">
                         <label class="text-xs text-gray-500 block mb-1">Type</label>
-                        <select id="filter-type" class="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-2xl px-3 py-2 text-sm" onchange="applyFilters()">
+                        <select id="filter-type" 
+                                class="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-2xl px-3 py-2 text-sm"
+                                onchange="applyFilters()">
                             <option value="">All</option>
                             <option value="income">Income</option>
                             <option value="expense">Expense</option>
                         </select>
                     </div>
-                    <div class="flex items-end">
+
+                    <!-- Reset Button -->
+                    <div class="w-full md:w-auto md:ml-auto pt-1 md:pt-0">
                         <button onclick="resetFilters()" 
-                                class="px-4 py-2.5 bg-slate-900 hover:bg-black text-white rounded-2xl text-sm font-medium transition-colors w-full md:w-auto">
+                                class="w-full md:w-auto px-5 py-[10px] bg-slate-900 hover:bg-black text-white rounded-2xl text-sm font-medium transition-colors">
                             Reset Filter
                         </button>
                     </div>
+
                 </div>
             </div>
 
