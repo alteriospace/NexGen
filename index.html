@@ -308,8 +308,8 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://qbeecugbswhwjknwmqxj.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_CYuWw1D0T3uNJ0C1F9IABg_uQJStCep';
+        const SUPABASE_URL = 'https://[GANTI_DENGAN_URL_PROJECT_ANDA].supabase.co';
+        const SUPABASE_KEY = '[GANTI_DENGAN_API_KEY_ANDA]';
         const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let myWallets = [];
@@ -561,7 +561,116 @@
 
         function openExportModal() { document.getElementById('exportModal').classList.add('active'); }
         function openFilterModal() { alert('Filter modal (demo)'); }
-        function openAddTransactionModal() { alert('Add Transaction modal (demo)'); }
+        function openAddTransactionModal() {
+            const modalHTML = `
+                <div id="addTrxModal" class="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-[60]">
+                    <div class="bg-white dark:bg-brand-surface w-full md:w-[420px] rounded-t-3xl md:rounded-3xl p-6">
+                        <div class="flex justify-between items-center mb-5">
+                            <h3 class="text-xl font-bold">Add Transaction</h3>
+                            <button onclick="closeAddTransactionModal()" class="text-2xl leading-none">&times;</button>
+                        </div>
+
+                        <form id="addTrxForm" onsubmit="submitTransaction(event)">
+                            <!-- Type -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium mb-1.5">Type</label>
+                                <div class="flex gap-2">
+                                    <label class="flex-1 cursor-pointer">
+                                        <input type="radio" name="type" value="expense" checked class="peer hidden">
+                                        <div class="peer-checked:bg-red-500 peer-checked:text-white border border-red-200 text-red-600 rounded-2xl py-2 text-center text-sm font-semibold">Expense</div>
+                                    </label>
+                                    <label class="flex-1 cursor-pointer">
+                                        <input type="radio" name="type" value="income" class="peer hidden">
+                                        <div class="peer-checked:bg-emerald-500 peer-checked:text-white border border-emerald-200 text-emerald-600 rounded-2xl py-2 text-center text-sm font-semibold">Income</div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Wallet -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium mb-1.5">Wallet</label>
+                                <select id="trxWallet" class="w-full border rounded-2xl px-4 py-2.5 text-sm bg-white dark:bg-brand-surface" required>
+                                    <option value="">-- Pilih Dompet --</option>
+                                </select>
+                            </div>
+
+                            <!-- Category -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium mb-1.5">Category</label>
+                                <select id="trxCategory" class="w-full border rounded-2xl px-4 py-2.5 text-sm bg-white dark:bg-brand-surface" required>
+                                    <option value="">-- Pilih Kategori --</option>
+                                </select>
+                            </div>
+
+                            <!-- Amount -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium mb-1.5">Amount</label>
+                                <input type="number" id="trxAmount" class="w-full border rounded-2xl px-4 py-2.5 text-sm" placeholder="0" required>
+                            </div>
+
+                            <!-- Date -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium mb-1.5">Date</label>
+                                <input type="date" id="trxDate" class="w-full border rounded-2xl px-4 py-2.5 text-sm" value="${new Date().toISOString().split('T')[0]}" required>
+                            </div>
+
+                            <!-- Notes -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium mb-1.5">Notes (Optional)</label>
+                                <textarea id="trxNotes" class="w-full border rounded-2xl px-4 py-2.5 text-sm" rows="2" placeholder="Catatan..."></textarea>
+                            </div>
+
+                            <!-- Proof -->
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium mb-1.5">Proof (Optional)</label>
+                                <input type="file" id="trxProof" accept="image/*" class="w-full text-sm">
+                            </div>
+
+                            <button type="submit" 
+                                    class="w-full bg-brand-blue hover:bg-blue-700 text-white py-3 rounded-2xl font-semibold text-base">
+                                Save Transaction
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // Populate wallets (dummy for now, nanti dari Supabase)
+            populateWalletDropdown();
+        }
+
+        function closeAddTransactionModal() {
+            const modal = document.getElementById('addTrxModal');
+            if (modal) modal.remove();
+        }
+
+        function populateWalletDropdown() {
+            const select = document.getElementById('trxWallet');
+            if (!select) return;
+
+            // Dummy data (nanti diganti dengan data dari Supabase)
+            const wallets = [
+                { id: 1, name: "BCA" },
+                { id: 2, name: "SeaBank" },
+                { id: 3, name: "Cash" },
+                { id: 4, name: "ShopeePay" }
+            ];
+
+            wallets.forEach(w => {
+                const option = document.createElement('option');
+                option.value = w.name;
+                option.textContent = w.name;
+                select.appendChild(option);
+            });
+        }
+
+        async function submitTransaction(e) {
+            e.preventDefault();
+            alert('Fungsi submit akan dihubungkan ke Supabase nanti.');
+            closeAddTransactionModal();
+        }
         function openAddWalletModal() { alert('Add Wallet modal (demo)'); }
         function exportData(type) { alert('Exporting as ' + type); document.getElementById('exportModal').classList.remove('active'); }
 
