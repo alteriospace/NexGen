@@ -250,7 +250,7 @@
                     <thead class="bg-gray-50 dark:bg-gray-800/50 text-xs">
                         <tr>
                             <th class="p-4 text-left">Date</th>
-                            <th class="p-4 text-left">Description</th>
+                            <th class="p-4 text-left">Category</th>
                             <th class="p-4 text-center">Proof</th>
                             <th class="p-4 text-right">Amount</th>
                         </tr>
@@ -291,6 +291,7 @@
         </div>
     </nav>
 
+    <!-- Export Modal -->
     <div id="exportModal" class="modal-backdrop" onclick="this.classList.remove('active')">
         <div class="fixed inset-0 flex items-center justify-center p-4" onclick="event.stopPropagation()">
             <div class="bg-white dark:bg-brand-surface rounded-3xl p-6 w-full max-w-sm">
@@ -305,14 +306,16 @@
 
     <script>
         // ==================== SUPABASE CONFIG ====================
-        const SUPABASE_URL = 'https://qbeecugbswhwjknwmqxj.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_CYuWw1D0T3uNJ0C1F9IABg_uQJStCep';
+        const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';   // ← GANTI DENGAN URL KAMU
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // ← GANTI DENGAN KEY KAMU
         const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // ==================== GLOBAL STATE ====================
         let myWallets = [];
         let allTransactions = [];
         let filteredTransactions = [];
-        let barChart;
+        let categories = [];
+        let categoryMap = {}; // id → name
 
         function formatRp(num) {
             return 'Rp ' + Number(num).toLocaleString('id-ID');
@@ -355,6 +358,7 @@
         }
 
         function updateActiveNav(pageId) {
+            // Desktop nav
             const deskContainer = document.getElementById('desktop-nav-container');
             const deskSlider = document.getElementById('nav-slider');
             const deskBtn = document.getElementById('nav-' + pageId);
@@ -369,6 +373,7 @@
                 deskSlider.style.width = `${bRect.width}px`;
             }
 
+            // Mobile nav
             const mobContainer = document.getElementById('mobile-nav-container');
             const mobSlider = document.getElementById('mobile-slider');
             const mobBtn = document.getElementById('nav-mob-' + pageId);
@@ -383,78 +388,98 @@
             }
         }
 
-        function setSliderExactSize() {
-            const container = document.getElementById('desktop-nav-container');
-            const slider = document.getElementById('nav-slider');
-            const activeBtn = container.querySelector('.nav-btn.active');
-
-            if (!container || !slider || !activeBtn) return;
-
-            slider.style.transition = 'none';
-
-            const containerLeft = container.getBoundingClientRect().left;
-            const btnLeft = activeBtn.getBoundingClientRect().left;
-            const btnWidth = activeBtn.getBoundingClientRect().width;
-
-            slider.style.left = `${btnLeft - containerLeft}px`;
-            slider.style.width = `${btnWidth}px`;
-
-            void slider.offsetWidth;
-
-            setTimeout(() => {
-                slider.style.transition = 'all 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
-            }, 10);
-        }
-
-        // ==================== SUPABASE FUNCTIONS ====================
+        // ==================== DATA FETCHING ====================
         async function fetchWallets() {
-            const { data, error } = await db.from('wallets').select('*').order('created_at');
+            const { data, error } = await db
+                .from('wallets')
+                .select('*')
+                .order('created_at', { ascending: true });
+
             if (error) {
                 console.error('Error fetching wallets:', error);
-                return;
+                return [];
             }
-            myWallets = data || [];
+            return data || [];
+        }
+
+        async function fetchCategories() {
+            const { data, error } = await db
+                .from('categories')
+                .select('*')
+                .order('type', { ascending: true });
+
+            if (error) {
+                console.error('Error fetching categories:', error);
+                return [];
+            }
+            return data || [];
         }
 
         async function fetchTransactions() {
             const { data, error } = await db
                 .from('transactions')
-                .select(`*, wallet:wallet_id(name)`)
+                .select(`
+                    *,
+                    wallets (name),
+                    categories (name, type)
+                `)
                 .order('transaction_date', { ascending: false });
-            
+
             if (error) {
                 console.error('Error fetching transactions:', error);
-                return;
+                return [];
             }
-            
-            allTransactions = (data || []).map(t => ({
-                ...t,
-                wallet_name: t.wallet?.name || 'Unknown'
-            }));
-            filteredTransactions = [...allTransactions];
+            return data || [];
         }
 
-        async function initData() {
-            await fetchWallets();
-            await fetchTransactions();
+        async function calculateTotals() {
+            let totalIncome = 0;
+            let totalExpense = 0;
 
-            // Calculate totals
-            const totalBalance = myWallets.reduce((sum, w) => sum + parseFloat(w.balance || 0), 0);
-            const totalIncome = allTransactions
-                .filter(t => t.type === 'income')
-                .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
-            const totalExpense = allTransactions
-                .filter(t => t.type === 'expense')
-                .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+            allTransactions.forEach(t => {
+                if (t.type === 'income') totalIncome += Number(t.amount);
+                else totalExpense += Number(t.amount);
+            });
+
+            const totalBalance = myWallets.reduce((sum, w) => sum + Number(w.balance), 0);
 
             document.getElementById('dash-balance').innerText = formatRp(totalBalance);
             document.getElementById('dash-income').innerText = formatRp(totalIncome);
             document.getElementById('dash-expense').innerText = formatRp(totalExpense);
+        }
 
-            renderWalletsHTML();
-            renderRecentTransactions();
-            renderTransactionsTable(allTransactions);
-            renderCharts();
+        async function loadData() {
+            try {
+                // Fetch all data in parallel
+                const [walletsData, categoriesData, transactionsData] = await Promise.all([
+                    fetchWallets(),
+                    fetchCategories(),
+                    fetchTransactions()
+                ]);
+
+                myWallets = walletsData;
+                categories = categoriesData;
+                allTransactions = transactionsData;
+                filteredTransactions = transactionsData;
+
+                // Create category map
+                categoryMap = {};
+                categories.forEach(cat => {
+                    categoryMap[cat.id] = cat.name;
+                });
+
+                // Render UI
+                renderWalletsHTML();
+                renderTransactionsTable(allTransactions);
+                await calculateTotals();
+
+                // Also render recent transactions on dashboard
+                renderRecentTransactions();
+
+            } catch (err) {
+                console.error('Failed to load data:', err);
+                alert('Gagal memuat data dari Supabase. Cek koneksi atau kredensial.');
+            }
         }
 
         function renderWalletsHTML() {
@@ -469,7 +494,9 @@
                 dash.innerHTML += `
                     <div class="flex justify-between p-3 border rounded-2xl">
                         <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-xl ${w.bg} ${w.color} flex items-center justify-center"><i class="fa-solid ${w.icon}"></i></div>
+                            <div class="w-9 h-9 rounded-xl ${w.bg || 'bg-gray-100'} ${w.color || 'text-gray-600'} flex items-center justify-center">
+                                <i class="fa-solid ${w.icon || 'fa-wallet'}"></i>
+                            </div>
                             <span class="font-semibold">${w.name}</span>
                         </div>
                         <span class="font-bold">${formatRp(w.balance)}</span>
@@ -478,7 +505,9 @@
 
                 grid.innerHTML += `
                     <div class="p-6 border rounded-3xl">
-                        <div class="w-11 h-11 rounded-2xl ${w.bg} ${w.color} flex items-center justify-center mb-4"><i class="fa-solid ${w.icon} text-xl"></i></div>
+                        <div class="w-11 h-11 rounded-2xl ${w.bg || 'bg-gray-100'} ${w.color || 'text-gray-600'} flex items-center justify-center mb-4">
+                            <i class="fa-solid ${w.icon || 'fa-wallet'} text-xl"></i>
+                        </div>
                         <p class="text-sm text-gray-500">${w.name}</p>
                         <p class="text-2xl font-extrabold mt-1">${formatRp(w.balance)}</p>
                     </div>
@@ -491,20 +520,26 @@
             if (!container) return;
 
             container.innerHTML = '';
-            const recent = [...allTransactions]
-                .sort((a, b) => new Date(b.transaction_date) - new Date(a.transaction_date))
-                .slice(0, 5);
+
+            const recent = allTransactions.slice(0, 5);
+
+            if (recent.length === 0) {
+                container.innerHTML = `<p class="text-sm text-gray-500 px-2">Belum ada transaksi.</p>`;
+                return;
+            }
 
             recent.forEach(t => {
                 const sign = t.type === 'income' ? '+' : '-';
-                const color = t.type === 'income' ? 'text-emerald-600' : 'text-red-600';
+                const catName = t.categories?.name || t.category || 'Uncategorized';
                 container.innerHTML += `
                     <div class="flex justify-between items-center p-3 border rounded-2xl">
                         <div>
-                            <p class="font-medium">${t.category}</p>
-                            <p class="text-xs text-gray-500">${new Date(t.transaction_date).toLocaleDateString('id-ID')} • ${t.wallet_name}</p>
+                            <p class="font-medium">${catName}</p>
+                            <p class="text-xs text-gray-500">${new Date(t.transaction_date).toLocaleDateString('id-ID')}</p>
                         </div>
-                        <span class="font-bold ${color}">${sign} ${formatRp(t.amount)}</span>
+                        <span class="font-bold ${t.type === 'income' ? 'text-emerald-600' : 'text-red-600'}">
+                            ${sign} ${formatRp(t.amount)}
+                        </span>
                     </div>
                 `;
             });
@@ -513,28 +548,29 @@
         function renderTransactionsTable(data) {
             const tbody = document.getElementById('full-trx-list');
             tbody.innerHTML = '';
+
             data.forEach(t => {
                 const sign = t.type === 'income' ? '+' : '-';
-                const color = t.type === 'income' ? 'text-emerald-600' : 'text-red-600';
+                const catName = t.categories?.name || categoryMap[t.category_id] || t.category || 'Uncategorized';
+                
                 tbody.innerHTML += `
                     <tr class="border-b hover:bg-gray-50 dark:hover:bg-gray-800/50">
                         <td class="p-4">${new Date(t.transaction_date).toLocaleDateString('id-ID')}</td>
-                        <td class="p-4">
-                            <div>${t.category}</div>
-                            <div class="text-xs text-gray-500">${t.wallet_name}</div>
+                        <td class="p-4">${catName}</td>
+                        <td class="p-4 text-center">${t.attachment_url ? '✓' : ''}</td>
+                        <td class="p-4 text-right font-bold ${t.type === 'income' ? 'text-emerald-600' : 'text-red-600'}">
+                            ${sign} ${formatRp(t.amount)}
                         </td>
-                        <td class="p-4 text-center">${t.attachment_url ? '<i class="fa-solid fa-image text-blue-500"></i>' : ''}</td>
-                        <td class="p-4 text-right font-bold ${color}">${sign} ${formatRp(t.amount)}</td>
                     </tr>
                 `;
             });
         }
 
+        // ==================== CHARTS ====================
+        let barChart;
         function renderCharts() {
             if (barChart) barChart.destroy();
             const ctx = document.getElementById('barChart').getContext('2d');
-            
-            // Simple monthly summary (bisa dikembangkan)
             barChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -549,45 +585,21 @@
             });
         }
 
+        // ==================== SEARCH ====================
         function setupSearch() {
             const input = document.getElementById('search-trx');
             input.addEventListener('input', () => {
                 const kw = input.value.toLowerCase();
-                filteredTransactions = allTransactions.filter(t => 
-                    t.category.toLowerCase().includes(kw) || 
-                    (t.wallet_name && t.wallet_name.toLowerCase().includes(kw))
-                );
+                filteredTransactions = allTransactions.filter(t => {
+                    const catName = (t.categories?.name || t.category || '').toLowerCase();
+                    return catName.includes(kw);
+                });
                 renderTransactionsTable(filteredTransactions);
             });
         }
 
-        function initialize() {
-            setSliderExactSize();
-
-            requestAnimationFrame(() => {
-                setSliderExactSize();
-            });
-
-            initData();
-            setupSearch();
-
-            document.getElementById('nav-mob-dashboard').classList.add('active');
-
-            setTimeout(() => {
-                setSliderExactSize();
-            }, 80);
-        }
-
-        // ==================== MODALS & ACTIONS ====================
-        function openExportModal() { 
-            document.getElementById('exportModal').classList.add('active'); 
-        }
-        
-        function openFilterModal() { 
-            alert('Filter modal akan segera hadir dengan fitur advanced!'); 
-        }
-
-        function openAddTransactionModal() {
+        // ==================== ADD TRANSACTION ====================
+        async function openAddTransactionModal() {
             const modalHTML = `
                 <div id="addTrxModal" class="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-[60]">
                     <div class="bg-white dark:bg-brand-surface w-full md:w-[420px] rounded-t-3xl md:rounded-3xl p-6">
@@ -596,17 +608,17 @@
                             <button onclick="closeAddTransactionModal()" class="text-2xl leading-none">&times;</button>
                         </div>
 
-                        <form id="addTrxForm" onsubmit="submitTransaction(event)">
+                        <form id="addTrxForm">
                             <!-- Type -->
                             <div class="mb-4">
                                 <label class="block text-sm font-medium mb-1.5">Type</label>
                                 <div class="flex gap-2">
                                     <label class="flex-1 cursor-pointer">
-                                        <input type="radio" name="type" value="expense" checked class="peer hidden">
+                                        <input type="radio" name="type" value="expense" checked class="peer hidden" onchange="updateCategoryOptions()">
                                         <div class="peer-checked:bg-red-500 peer-checked:text-white border border-red-200 text-red-600 rounded-2xl py-2 text-center text-sm font-semibold">Expense</div>
                                     </label>
                                     <label class="flex-1 cursor-pointer">
-                                        <input type="radio" name="type" value="income" class="peer hidden">
+                                        <input type="radio" name="type" value="income" class="peer hidden" onchange="updateCategoryOptions()">
                                         <div class="peer-checked:bg-emerald-500 peer-checked:text-white border border-emerald-200 text-emerald-600 rounded-2xl py-2 text-center text-sm font-semibold">Income</div>
                                     </label>
                                 </div>
@@ -646,13 +658,7 @@
                                 <textarea id="trxNotes" class="w-full border rounded-2xl px-4 py-2.5 text-sm" rows="2" placeholder="Catatan..."></textarea>
                             </div>
 
-                            <!-- Proof -->
-                            <div class="mb-6">
-                                <label class="block text-sm font-medium mb-1.5">Proof (Optional)</label>
-                                <input type="file" id="trxProof" accept="image/*" class="w-full text-sm">
-                            </div>
-
-                            <button type="submit" 
+                            <button type="button" onclick="submitTransaction()"
                                     class="w-full bg-brand-blue hover:bg-blue-700 text-white py-3 rounded-2xl font-semibold text-base">
                                 Save Transaction
                             </button>
@@ -663,8 +669,8 @@
 
             document.body.insertAdjacentHTML('beforeend', modalHTML);
             
-            populateWalletDropdown();
-            populateCategoryDropdown();
+            await populateWalletDropdown();
+            await populateCategoryDropdown('expense'); // default
         }
 
         function closeAddTransactionModal() {
@@ -672,119 +678,148 @@
             if (modal) modal.remove();
         }
 
-        function populateWalletDropdown() {
+        async function populateWalletDropdown() {
             const select = document.getElementById('trxWallet');
             if (!select) return;
 
             select.innerHTML = '<option value="">-- Pilih Dompet --</option>';
+
             myWallets.forEach(w => {
                 const option = document.createElement('option');
                 option.value = w.id;
-                option.textContent = w.name;
+                option.textContent = `${w.name} (${formatRp(w.balance)})`;
                 select.appendChild(option);
             });
         }
 
-        function populateCategoryDropdown() {
+        async function populateCategoryDropdown(selectedType) {
             const select = document.getElementById('trxCategory');
             if (!select) return;
 
             select.innerHTML = '<option value="">-- Pilih Kategori --</option>';
-            
-            const categories = [
-                'Salary', 'Freelance', 'Investment', 'Bonus', 'Other Income',
-                'Food & Drink', 'Transport', 'Shopping', 'Bills', 'Rent', 
-                'Entertainment', 'Health', 'Education', 'Other Expense'
-            ];
-            
-            categories.forEach(cat => {
-                const opt = document.createElement('option');
-                opt.value = cat;
-                opt.textContent = cat;
-                select.appendChild(opt);
+
+            const filteredCats = categories.filter(c => c.type === selectedType);
+
+            filteredCats.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat.id;
+                option.textContent = cat.name;
+                select.appendChild(option);
             });
         }
 
-        async function submitTransaction(e) {
-            e.preventDefault();
-            
-            const walletId = document.getElementById('trxWallet').value;
+        function updateCategoryOptions() {
             const type = document.querySelector('input[name="type"]:checked').value;
-            const category = document.getElementById('trxCategory').value;
+            populateCategoryDropdown(type);
+        }
+
+        async function submitTransaction() {
+            const type = document.querySelector('input[name="type"]:checked').value;
+            const walletId = document.getElementById('trxWallet').value;
+            const categoryId = document.getElementById('trxCategory').value;
             const amount = parseFloat(document.getElementById('trxAmount').value);
             const date = document.getElementById('trxDate').value;
-            const notes = document.getElementById('trxNotes').value || null;
-            const proofFile = document.getElementById('trxProof').files[0];
+            const notes = document.getElementById('trxNotes').value;
 
-            if (!walletId || !category || !amount || !date) {
-                alert('Mohon lengkapi semua field wajib!');
+            if (!walletId || !categoryId || !amount) {
+                alert('Harap isi Wallet, Category, dan Amount!');
                 return;
             }
 
-            let attachment_url = null;
+            try {
+                // Insert transaction
+                const { error } = await db.from('transactions').insert({
+                    wallet_id: walletId,
+                    category_id: categoryId,
+                    type: type,
+                    amount: amount,
+                    transaction_date: date,
+                    notes: notes || null
+                });
 
-            // Upload proof if exists
-            if (proofFile) {
-                const fileName = `${Date.now()}_${proofFile.name}`;
-                const { data: uploadData, error: uploadError } = await db.storage
-                    .from('proofs')
-                    .upload(fileName, proofFile);
+                if (error) throw error;
 
-                if (uploadError) {
-                    alert('Gagal upload bukti: ' + uploadError.message);
-                    return;
+                // Update wallet balance locally
+                const walletIndex = myWallets.findIndex(w => w.id === walletId);
+                if (walletIndex !== -1) {
+                    if (type === 'income') {
+                        myWallets[walletIndex].balance = Number(myWallets[walletIndex].balance) + amount;
+                    } else {
+                        myWallets[walletIndex].balance = Number(myWallets[walletIndex].balance) - amount;
+                    }
+
+                    // Update balance in Supabase
+                    await db.from('wallets')
+                        .update({ balance: myWallets[walletIndex].balance })
+                        .eq('id', walletId);
                 }
 
-                const { data: urlData } = db.storage.from('proofs').getPublicUrl(fileName);
-                attachment_url = urlData.publicUrl;
+                closeAddTransactionModal();
+                await loadData(); // refresh semua data
+
+                alert('Transaksi berhasil disimpan!');
+
+            } catch (err) {
+                console.error(err);
+                alert('Gagal menyimpan transaksi: ' + err.message);
             }
-
-            // Insert transaction
-            const { error: insertError } = await db.from('transactions').insert({
-                wallet_id: walletId,
-                type: type,
-                category: category,
-                amount: amount,
-                transaction_date: date,
-                notes: notes,
-                attachment_url: attachment_url
-            });
-
-            if (insertError) {
-                alert('Gagal menyimpan transaksi: ' + insertError.message);
-                return;
-            }
-
-            // Update wallet balance
-            const wallet = myWallets.find(w => w.id === walletId);
-            if (wallet) {
-                const newBalance = type === 'income' 
-                    ? parseFloat(wallet.balance) + amount 
-                    : parseFloat(wallet.balance) - amount;
-
-                await db.from('wallets')
-                    .update({ balance: newBalance })
-                    .eq('id', walletId);
-            }
-
-            closeAddTransactionModal();
-            await initData(); // Refresh semua data
-            alert('Transaksi berhasil disimpan!');
         }
 
+        // ==================== INITIALIZATION ====================
+        async function initializeApp() {
+            // Setup slider position
+            setTimeout(() => {
+                const container = document.getElementById('desktop-nav-container');
+                const slider = document.getElementById('nav-slider');
+                const activeBtn = container?.querySelector('.nav-btn.active');
+
+                if (container && slider && activeBtn) {
+                    slider.style.transition = 'none';
+                    const cRect = container.getBoundingClientRect();
+                    const bRect = activeBtn.getBoundingClientRect();
+                    slider.style.left = `${bRect.left - cRect.left}px`;
+                    slider.style.width = `${bRect.width}px`;
+                    void slider.offsetWidth;
+                    setTimeout(() => {
+                        slider.style.transition = 'all 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
+                    }, 10);
+                }
+            }, 50);
+
+            // Load real data from Supabase
+            await loadData();
+            setupSearch();
+
+            // Set initial active mobile nav
+            document.getElementById('nav-mob-dashboard')?.classList.add('active');
+
+            // Initial chart if needed
+            setTimeout(() => {
+                if (document.getElementById('page-report').classList.contains('active')) {
+                    renderCharts();
+                }
+            }, 300);
+        }
+
+        function openExportModal() { 
+            document.getElementById('exportModal').classList.add('active'); 
+        }
+        
+        function openFilterModal() { 
+            alert('Filter modal masih dalam pengembangan'); 
+        }
+        
         function openAddWalletModal() { 
-            alert('Fitur Add Wallet akan segera hadir (bisa langsung tambah via Supabase untuk sekarang)'); 
+            alert('Fitur tambah wallet baru akan segera hadir!'); 
         }
         
         function exportData(type) { 
-            alert('Exporting as ' + type + ' (demo)'); 
+            alert('Fitur export ' + type + ' akan segera diimplementasikan'); 
             document.getElementById('exportModal').classList.remove('active'); 
         }
 
-        // ==================== START APP ====================
-        window.onload = function() {
-            initialize();
-        };
+        // Start the app
+        window.onload = initializeApp;
     </script>
 </body>
 </html>
