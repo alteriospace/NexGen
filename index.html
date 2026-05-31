@@ -312,7 +312,10 @@
                         <span>Add Transaction</span>
                     </button>
                 </div>
-                <table class="w-full">
+
+                <!-- Table with horizontal scroll on mobile -->
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[700px]">
                     <thead class="bg-gray-100 dark:bg-slate-800 text-xs">
                         <tr>
                             <th class="p-4 text-left">Date</th>
@@ -325,6 +328,7 @@
                     </thead>
                     <tbody id="full-trx-list" class="text-sm"></tbody>
                 </table>
+                </div>
             </div>
         </div>
 
@@ -571,18 +575,9 @@
         }
 
         function applyFilters() {
-            const startEl = document.getElementById('filter-start-date');
-            const endEl = document.getElementById('filter-end-date');
-            const typeEl = document.getElementById('filter-type');
-
-            if (!startEl || !endEl || !typeEl) {
-                console.warn('Filter elements not found');
-                return;
-            }
-
-            const start = startEl.value;
-            const end = endEl.value;
-            const type = typeEl.value;
+            const start = document.getElementById('filter-start-date').value;
+            const end = document.getElementById('filter-end-date').value;
+            const type = document.getElementById('filter-type').value;
 
             filteredTransactions = allTransactions.filter(t => {
                 let match = true;
@@ -591,24 +586,13 @@
                 if (type && t.type !== type) match = false;
                 return match;
             });
-
             renderTransactionsTable(filteredTransactions);
-
-            // Optional feedback
-            if (filteredTransactions.length === 0) {
-                console.log('%c[Filter] Tidak ada transaksi yang cocok dengan filter.', 'color: orange');
-            }
         }
 
         function resetFilters() {
-            const startEl = document.getElementById('filter-start-date');
-            const endEl = document.getElementById('filter-end-date');
-            const typeEl = document.getElementById('filter-type');
-
-            if (startEl) startEl.value = '';
-            if (endEl) endEl.value = '';
-            if (typeEl) typeEl.value = '';
-
+            document.getElementById('filter-start-date').value = '';
+            document.getElementById('filter-end-date').value = '';
+            document.getElementById('filter-type').value = '';
             filteredTransactions = allTransactions;
             renderTransactionsTable(filteredTransactions);
         }
